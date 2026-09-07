@@ -1,0 +1,6 @@
+ASC_PATTERN.md
+
+node_modules/
+.env
+contracts/out/
+contracts/cache/

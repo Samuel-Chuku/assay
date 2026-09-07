@@ -1,0 +1,9 @@
+packages:
+  - config
+  - worker
+  - underwriter
+  - web
+
+# esbuild is tsx's engine and fetches its platform binary in a postinstall.
+allowBuilds:
+  esbuild: true

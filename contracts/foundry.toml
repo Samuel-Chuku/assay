@@ -1,0 +1,30 @@
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["../node_modules", "lib"]
+
+remappings = [
+  "@openzeppelin/=../node_modules/@openzeppelin/",
+  "@gluwa/asc-contracts/=../node_modules/@gluwa/asc-contracts/",
+  "forge-std/=lib/forge-std/src/",
+]
+
+solc_version = "0.8.30"
+optimizer = true
+optimizer_runs = 200
+
+# T1: Creditcoin's EVM is London. Solidity 0.8.20+ defaults to Shanghai and
+# emits PUSH0, which London does not support. Contracts deploy and then revert
+# on every call with no useful error.
+evm_version = "london"
+
+# The examples repo needs this: ASCMinter plus the packaged ASCBase hit
+# "stack too deep" without it.
+via_ir = true
+
+verbosity = 2
+
+[lint]
+lint_on_build = false
