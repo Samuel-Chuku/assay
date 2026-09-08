@@ -45,3 +45,79 @@ export const CREDIT_PARAMS = {
 
 /** Opening deposit from the demo lender, in tCTC. */
 export const DEMO_POOL_DEPOSIT = '5.0';
+
+/**
+ * The demo cast on Sepolia.
+ *
+ * The Reputation Registry rejects feedback from anyone authorised over the agent
+ * being rated, but that check is per agent, not global. So participants can rate
+ * each other's agents and no pool of dedicated raters is needed.
+ *
+ * The point of the shape below is the contrast. `refused` carries better raw
+ * numbers than `approved`, and every one of them comes from a single wallet that
+ * holds no identity of its own. A formula that averages scores prefers it. A
+ * reader that weighs counterparty breadth and standing does not. That is T13
+ * made concrete, and it is the demo's best moment.
+ *
+ * Wallet 0 is the deployer. Wallets 1 to 4 are derived from it, see
+ * `scripts/seed-sepolia.ts`.
+ */
+export const DEMO_WALLET_COUNT = 4;
+
+/** Sepolia ETH sent to each derived wallet. Measured need is under a third of this. */
+export const DEMO_WALLET_FUNDING = '0.004';
+
+export const DEMO_CAST = {
+  /** Owned by wallet 1. Rated by three distinct counterparties that each hold an identity. */
+  approved: {
+    ownerIndex: 1,
+    name: 'Meridian Research Agent',
+    description:
+      'Testnet demo agent for Assay. Broad counterparty history across several distinct payers.',
+  },
+  /** Owned by wallet 2. Rated only by wallet 4, which holds no identity at all. */
+  refused: {
+    ownerIndex: 2,
+    name: 'Halcyon Yield Agent',
+    description:
+      'Testnet demo agent for Assay. Numerically strong history concentrated in a single new counterparty.',
+  },
+  /** Owned by wallet 3. Exists so wallet 3 has standing when it rates others. */
+  standing: {
+    ownerIndex: 3,
+    name: 'Corvus Audit Agent',
+    description: 'Testnet demo agent for Assay. Acts as a counterparty with its own registered identity.',
+  },
+} as const;
+
+/**
+ * Who rates whom. `value` is scaled by `valueDecimals`, so 92 at 2 decimals is
+ * 0.92. Wallet 0 is the deployer.
+ */
+export const DEMO_FEEDBACK = {
+  approved: [
+    { raterIndex: 0, value: 88, tag1: 'delivery', tag2: 'onTime' },
+    { raterIndex: 2, value: 92, tag1: 'quality', tag2: 'accurate' },
+    { raterIndex: 3, value: 95, tag1: 'delivery', tag2: 'onTime' },
+  ],
+  refused: [
+    { raterIndex: 4, value: 99, tag1: 'delivery', tag2: 'onTime' },
+    { raterIndex: 4, value: 100, tag1: 'delivery', tag2: 'onTime' },
+    { raterIndex: 4, value: 99, tag1: 'quality', tag2: 'excellent' },
+    { raterIndex: 4, value: 98, tag1: 'delivery', tag2: 'onTime' },
+    { raterIndex: 4, value: 100, tag1: 'quality', tag2: 'excellent' },
+  ],
+} as const;
+
+export const DEMO_FEEDBACK_DECIMALS = 2;
+
+export function agentCardUri(name: string, description: string): string {
+  const card = {
+    type: 'https://eips.ethereum.org/EIPS/eip-8004#registration-v1',
+    name,
+    description,
+    active: true,
+    services: [],
+  };
+  return `data:application/json,${encodeURIComponent(JSON.stringify(card))}`;
+}

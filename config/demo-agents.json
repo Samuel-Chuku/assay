@@ -1,0 +1,89 @@
+{
+  "wallets": {
+    "0": "0x4B11611CF7C90aEc2003721d71107d7E1cBf37c2",
+    "1": "0x491b8312717d5406f52b7287FdD9773Cfcc6cAc6",
+    "2": "0xa0f67760468D678b5C2138bf0D0319aa569644eE",
+    "3": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
+    "4": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F"
+  },
+  "agents": {
+    "approved": {
+      "agentId": 10155,
+      "owner": "0x491b8312717d5406f52b7287FdD9773Cfcc6cAc6",
+      "registrationTx": "0x4442c6311a850e65d797c8ef9f47b59e368148a0b6b6c62c8ce6a0c3ce6e19f7"
+    },
+    "refused": {
+      "agentId": 10156,
+      "owner": "0xa0f67760468D678b5C2138bf0D0319aa569644eE",
+      "registrationTx": "0x887f5afed64ae148c87110df7b761b0a40fce056860a7bcdb80ae06ea390f07c"
+    },
+    "standing": {
+      "agentId": 10157,
+      "owner": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
+      "registrationTx": "0xddf1a3705d5c2c6f53495bd660001371287e2c6f906ebafdd7b23e989dc4b35b"
+    }
+  },
+  "feedback": [
+    {
+      "agentKey": "approved",
+      "rater": "0x4B11611CF7C90aEc2003721d71107d7E1cBf37c2",
+      "value": 88,
+      "tx": "0xcb8d6687ea23553653206ac259afc7b38e9c4a432e1fb047e14dffd7c1f1430b"
+    },
+    {
+      "agentKey": "approved",
+      "rater": "0xa0f67760468D678b5C2138bf0D0319aa569644eE",
+      "value": 92,
+      "tx": "0xcc4e08070a9a52255652c05b4c65384384cd00206c6de6d1cd5bbf8132a102cd"
+    },
+    {
+      "agentKey": "approved",
+      "rater": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
+      "value": 95,
+      "tx": "0x7b2236038e267010e0f10a2df406b91ff4682ac60cd230224b22166878287f7f"
+    },
+    {
+      "agentKey": "refused",
+      "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+      "value": 99,
+      "tx": "0x98be2555e368d76d7748b65462f9c2f919103643f044b97dade8bef6963d3afe"
+    },
+    {
+      "agentKey": "refused",
+      "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+      "value": 100,
+      "tx": "0x92d2283c1dec2c651a16cd2096443f067ece56d71b17788905a9e6fc76683403"
+    },
+    {
+      "agentKey": "refused",
+      "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+      "value": 99,
+      "tx": "0xfbe481ac12f861e432f35d36e7f5a5e6f018774c1eb776044d26cc23dec4ea6d"
+    },
+    {
+      "agentKey": "refused",
+      "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+      "value": 98,
+      "tx": "0x7af1734c53c39c1e6de33741f8858b7c216b696b347ba4c5d19585da0f98010b"
+    },
+    {
+      "agentKey": "refused",
+      "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+      "value": 100,
+      "tx": "0xa6d0c636e930c0e1c2bde00efbaaa6aece775f9ee15eba1257f1cd9f7ad9d381"
+    }
+  ],
+  "proven": [
+    "0x4442c6311a850e65d797c8ef9f47b59e368148a0b6b6c62c8ce6a0c3ce6e19f7",
+    "0x887f5afed64ae148c87110df7b761b0a40fce056860a7bcdb80ae06ea390f07c",
+    "0xddf1a3705d5c2c6f53495bd660001371287e2c6f906ebafdd7b23e989dc4b35b",
+    "0xcb8d6687ea23553653206ac259afc7b38e9c4a432e1fb047e14dffd7c1f1430b",
+    "0xcc4e08070a9a52255652c05b4c65384384cd00206c6de6d1cd5bbf8132a102cd",
+    "0x7b2236038e267010e0f10a2df406b91ff4682ac60cd230224b22166878287f7f",
+    "0x98be2555e368d76d7748b65462f9c2f919103643f044b97dade8bef6963d3afe",
+    "0x92d2283c1dec2c651a16cd2096443f067ece56d71b17788905a9e6fc76683403",
+    "0xfbe481ac12f861e432f35d36e7f5a5e6f018774c1eb776044d26cc23dec4ea6d",
+    "0x7af1734c53c39c1e6de33741f8858b7c216b696b347ba4c5d19585da0f98010b",
+    "0xa6d0c636e930c0e1c2bde00efbaaa6aece775f9ee15eba1257f1cd9f7ad9d381"
+  ]
+}

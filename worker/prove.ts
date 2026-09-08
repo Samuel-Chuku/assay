@@ -85,16 +85,28 @@ export async function prove(txHash: string, actionName: ActionName): Promise<str
 
   const data = oracle.interface.encodeFunctionData(oracle.interface.getFunction(EXECUTE_SIGNATURE)!, args);
 
-  // T7: estimation runs light on this chain. Buffer it, and if estimation
-  // itself fails, fall back to a size-derived limit rather than guessing low.
+  // T7: estimation runs light on this chain, so buffer it.
+  //
+  // A failed estimate means one of two very different things, and conflating
+  // them costs real money. A timeout or transport error says nothing about
+  // whether the call would succeed, so fall back to a size-derived limit. A
+  // revert says the call *will* fail, usually because this query was already
+  // processed, and sending anyway just burns gas on a guaranteed revert.
   let gasLimit: bigint;
   try {
     const estimate = await creditcoin.estimateGas({ to: DEPLOYMENTS.assayOracle, data, from: wallet.address });
     gasLimit = (estimate * BigInt(Math.round(GAS_LIMIT_MULTIPLIER * 100))) / 100n;
     console.log(`Gas estimate ${estimate}, sending with ${gasLimit}`);
   } catch (error) {
+    const code = (error as { code?: string }).code;
+    if (code === 'CALL_EXCEPTION' || code === 'UNPREDICTABLE_GAS_LIMIT') {
+      throw new Error(
+        `Refusing to send: the call reverts under estimation (${(error as Error).message.slice(0, 120)}). ` +
+          'This usually means the proof was already submitted.'
+      );
+    }
     gasLimit = BigInt(21_000 + proof.continuityProof.roots.length * 5_000 + 400_000);
-    console.warn(`Gas estimation failed (${(error as Error).message.slice(0, 60)}), using ${gasLimit}`);
+    console.warn(`Gas estimation unavailable (${code ?? 'unknown'}), using ${gasLimit}`);
   }
 
   const tx = await wallet.sendTransaction({ to: DEPLOYMENTS.assayOracle, data, gasLimit });
@@ -127,7 +139,11 @@ async function main(): Promise<void> {
   await prove(txHash, action as ActionName);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// Only run the CLI when this file is the entry point, so other scripts can
+// import `prove` without triggering it.
+if (process.argv[1]?.endsWith('prove.ts')) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

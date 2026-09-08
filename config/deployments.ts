@@ -13,6 +13,15 @@ export const DEPLOYMENTS = {
   creditLine: '0x210fb072cdcC034A691685Ea5ac14347D77A501c',
 } as const;
 
+/**
+ * Block the oracle was deployed at.
+ *
+ * Creditcoin's RPC times out any `eth_getLogs` that takes over 10 seconds, and
+ * the chain is past 5.4 million blocks, so scanning from genesis always fails.
+ * Every log query starts here instead.
+ */
+export const ORACLE_DEPLOYED_AT_BLOCK = 5448907;
+
 /** The demo agent whose ERC-8004 history Assay underwrites. */
 export const DEMO_AGENT_ID = 10128;
 
