@@ -15,6 +15,14 @@ contract AssayOracleHarness is AssayOracle {
         _recordFeedback(queryId, encodedTransaction);
     }
 
+    function exposeRecordIdentityTransfer(bytes32 queryId, bytes memory encodedTransaction) external {
+        _recordIdentityTransfer(queryId, encodedTransaction);
+    }
+
+    function exposeRecordWalletChange(bytes32 queryId, bytes memory encodedTransaction) external {
+        _recordWalletChange(queryId, encodedTransaction);
+    }
+
     function exposeComputeQueryId(
         uint64 chainKey,
         uint64 blockHeight,

@@ -5,45 +5,36 @@ import {Test} from "forge-std/Test.sol";
 
 import {AssayOracle} from "../src/AssayOracle.sol";
 import {AssayOracleHarness} from "./harness/AssayOracleHarness.sol";
-import {EvmV1Decoder} from "@gluwa/asc-contracts/contracts/common/EvmV1Decoder.sol";
+import {ProofFixtures, MockNativeQueryVerifier} from "./harness/ProofFixtures.sol";
 import {INativeQueryVerifier} from "@gluwa/asc-contracts/contracts/write-ability/common/INativeQueryVerifier.sol";
 
-/// @dev Stand-in for the Creditcoin block-prover precompile (0xFD2) in unit tests.
-/// adapted-from-examples: bridge/test/ASCMinterSecurity.t.sol
-contract MockNativeQueryVerifier {
-    function calculateTxIndex(INativeQueryVerifier.MerkleProof calldata) external pure returns (uint64) {
-        return 0;
-    }
-
-    function verifyAndEmit(
-        uint64,
-        uint64,
-        bytes calldata,
-        INativeQueryVerifier.MerkleProof calldata,
-        INativeQueryVerifier.ContinuityProof calldata
-    ) external pure returns (bool) {
-        return false;
-    }
-}
-
-contract AssayOracleTest is Test {
+contract AssayOracleTest is Test, ProofFixtures {
     AssayOracleHarness internal oracle;
 
     address internal constant VERIFIER_PRECOMPILE = 0x0000000000000000000000000000000000000FD2;
-    address internal constant IDENTITY = 0x8004A818BFB912233c491871b3d84c89A494BD9e;
-    address internal constant REPUTATION = 0x8004B663056A597Dffe9eCcC1965A193B7388713;
-
-    /// A contract emitting byte-identical events with invented values.
-    address internal constant IMPOSTOR = address(0xBAD);
 
     address internal owner = address(0xA9E);
     address internal client = address(0xC11E);
+    address internal newOwner = address(0xB0B);
+    address internal walletA = address(0xDA1);
     uint256 internal constant AGENT_ID = 10128;
 
     function setUp() public {
         MockNativeQueryVerifier mock = new MockNativeQueryVerifier();
         vm.etch(VERIFIER_PRECOMPILE, address(mock).code);
         oracle = new AssayOracleHarness();
+    }
+
+    /// The fixtures declare the signatures independently. If either side drifts,
+    /// fail here rather than let the tests agree with themselves.
+    function test_fixtureSignaturesMatchContract() public view {
+        assertEq(FIXTURE_REGISTERED_SIG, oracle.REGISTERED_SIG(), "Registered");
+        assertEq(FIXTURE_NEW_FEEDBACK_SIG, oracle.NEW_FEEDBACK_SIG(), "NewFeedback");
+        assertEq(FIXTURE_TRANSFER_SIG, oracle.TRANSFER_SIG(), "Transfer");
+        assertEq(FIXTURE_METADATA_SET_SIG, oracle.METADATA_SET_SIG(), "MetadataSet");
+        assertEq(FIXTURE_AGENT_WALLET_KEY_HASH, oracle.AGENT_WALLET_KEY_HASH(), "agentWallet key");
+        assertEq(IDENTITY, oracle.IDENTITY_REGISTRY(), "identity registry");
+        assertEq(REPUTATION, oracle.REPUTATION_REGISTRY(), "reputation registry");
     }
 
     // ---------------------------------------------------------------- T5 ----
@@ -63,13 +54,13 @@ contract AssayOracleTest is Test {
     }
 
     function test_registration_acceptsRealRegistry() public {
-        bytes memory encoded = _registeredTx(IDENTITY, AGENT_ID, owner, 1);
-        oracle.exposeRecordRegistration(bytes32(uint256(3)), encoded);
+        oracle.exposeRecordRegistration(bytes32(uint256(3)), _registeredTx(IDENTITY, AGENT_ID, owner, 1));
 
-        (bool proven, address recordedOwner,, uint32 count) = oracle.agents(AGENT_ID);
-        assertTrue(proven, "agent should be proven");
-        assertEq(recordedOwner, owner, "owner mismatch");
-        assertEq(count, 0, "no feedback yet");
+        AssayOracle.AgentRecord memory record = oracle.getAgent(AGENT_ID);
+        assertTrue(record.proven, "agent should be proven");
+        assertEq(record.owner, owner, "owner mismatch");
+        assertEq(record.currentOwner, owner, "current owner mismatch");
+        assertEq(record.feedbackCount, 0, "no feedback yet");
     }
 
     /// An impostor log sitting alongside a genuine one must not be recorded.
@@ -77,14 +68,11 @@ contract AssayOracleTest is Test {
         bytes memory encoded = _twoRegisteredLogsTx(IMPOSTOR, 999, address(0xDEAD), IDENTITY, AGENT_ID, owner);
         oracle.exposeRecordRegistration(bytes32(uint256(4)), encoded);
 
-        (bool provenReal,,,) = oracle.agents(AGENT_ID);
-        (bool provenFake,,,) = oracle.agents(999);
-        assertTrue(provenReal, "genuine agent should be proven");
-        assertFalse(provenFake, "impostor agent must not be proven");
+        assertTrue(oracle.getAgent(AGENT_ID).proven, "genuine agent should be proven");
+        assertFalse(oracle.getAgent(999).proven, "impostor agent must not be proven");
     }
 
     // ---------------------------------------------------------------- T4 ----
-    // Inclusion is not success.
 
     function test_rejectsRevertedTransaction() public {
         bytes memory encoded = _registeredTx(IDENTITY, AGENT_ID, owner, 0);
@@ -93,7 +81,6 @@ contract AssayOracleTest is Test {
     }
 
     // ---------------------------------------------------------------- T6 ----
-    // Replay, handled by ASCBase.
 
     function test_replayedQueryIdRejected() public {
         uint64 chainKey = 1;
@@ -112,8 +99,7 @@ contract AssayOracleTest is Test {
 
     function test_feedback_decodesValuesFromRealLayout() public {
         _proveAgent();
-        bytes memory encoded = _feedbackTx(REPUTATION, AGENT_ID, client, 7, -250, 2, 1);
-        oracle.exposeRecordFeedback(bytes32(uint256(6)), encoded);
+        oracle.exposeRecordFeedback(bytes32(uint256(6)), _feedbackTx(REPUTATION, AGENT_ID, client, 7, -250, 2, 1));
 
         assertEq(oracle.feedbackCount(AGENT_ID), 1);
         AssayOracle.FeedbackRecord memory f = oracle.feedbackAt(AGENT_ID, 0);
@@ -145,87 +131,92 @@ contract AssayOracleTest is Test {
         oracle.exposeProcessAction(9, bytes32(uint256(10)), "");
     }
 
+    // ---------------------------------------------------------------- T8 ----
+    // Identity is a transferable ERC-721.
+
+    function test_transfer_rejectsImpostorErc721() public {
+        _proveAgent();
+        // Any ERC-721 anywhere emits a byte-identical Transfer.
+        bytes memory encoded = _transferTx(IMPOSTOR, owner, newOwner, AGENT_ID);
+        vm.expectRevert("No Transfer event from the Identity Registry");
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(20)), encoded);
+    }
+
+    function test_transfer_incrementsOwnerChanges() public {
+        _proveAgent();
+        assertEq(oracle.getAgent(AGENT_ID).ownerChanges, 0, "starts at zero");
+
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(21)), _transferTx(IDENTITY, owner, newOwner, AGENT_ID));
+
+        AssayOracle.AgentRecord memory record = oracle.getAgent(AGENT_ID);
+        assertEq(record.ownerChanges, 1, "one change");
+        assertEq(record.currentOwner, newOwner, "current owner updated");
+        assertEq(record.owner, owner, "owner at first proof must not move");
+    }
+
+    /// The mint at registration is not a change of hands.
+    function test_transfer_mintDoesNotCountAsChange() public {
+        _proveAgent();
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(22)), _transferTx(IDENTITY, address(0), owner, AGENT_ID));
+        assertEq(oracle.getAgent(AGENT_ID).ownerChanges, 0, "mint must not count");
+    }
+
+    /// Proofs can arrive in any order, so the counter must never regress.
+    function test_transfer_counterIsMonotonic() public {
+        _proveAgent();
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(23)), _transferTx(IDENTITY, owner, newOwner, AGENT_ID));
+        // an older transfer proved afterwards
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(24)), _transferTx(IDENTITY, newOwner, owner, AGENT_ID));
+        assertEq(oracle.getAgent(AGENT_ID).ownerChanges, 2, "must count up, never back");
+    }
+
+    function test_transfer_requiresProvenIdentity() public {
+        bytes memory encoded = _transferTx(IDENTITY, owner, newOwner, AGENT_ID);
+        vm.expectRevert("Agent identity not proved yet");
+        oracle.exposeRecordIdentityTransfer(bytes32(uint256(25)), encoded);
+    }
+
+    // ---------------------------------------------------------------- T9 ----
+
+    function test_wallet_recordsChange() public {
+        _proveAgent();
+        oracle.exposeRecordWalletChange(bytes32(uint256(30)), _walletTx(IDENTITY, AGENT_ID, abi.encodePacked(walletA)));
+
+        AssayOracle.AgentRecord memory record = oracle.getAgent(AGENT_ID);
+        assertEq(record.walletChanges, 1, "one change");
+        assertEq(record.paymentWallet, walletA, "wallet recorded");
+    }
+
+    function test_wallet_ignoresOtherMetadataKeys() public {
+        _proveAgent();
+        bytes memory encoded = _metadataTx(IDENTITY, AGENT_ID, keccak256(bytes("somethingElse")), "value");
+        vm.expectRevert("No agentWallet MetadataSet event from the Identity Registry");
+        oracle.exposeRecordWalletChange(bytes32(uint256(31)), encoded);
+        assertEq(oracle.getAgent(AGENT_ID).walletChanges, 0, "unrelated metadata must not count");
+    }
+
+    /// A transfer clears the wallet by emitting this same event with an empty value.
+    function test_wallet_unsetIsAChange() public {
+        _proveAgent();
+        oracle.exposeRecordWalletChange(bytes32(uint256(32)), _walletTx(IDENTITY, AGENT_ID, abi.encodePacked(walletA)));
+        oracle.exposeRecordWalletChange(bytes32(uint256(33)), _walletTx(IDENTITY, AGENT_ID, ""));
+
+        AssayOracle.AgentRecord memory record = oracle.getAgent(AGENT_ID);
+        assertEq(record.walletChanges, 2, "unset counts");
+        assertEq(record.paymentWallet, address(0), "wallet cleared");
+    }
+
+    function test_wallet_rejectsImpostorEmitter() public {
+        _proveAgent();
+        bytes memory encoded = _walletTx(IMPOSTOR, AGENT_ID, abi.encodePacked(address(0xBAD1)));
+        vm.expectRevert("No agentWallet MetadataSet event from the Identity Registry");
+        oracle.exposeRecordWalletChange(bytes32(uint256(34)), encoded);
+    }
+
     // ------------------------------------------------------------- helpers --
 
     function _proveAgent() internal {
         oracle.exposeRecordRegistration(bytes32(uint256(100)), _registeredTx(IDENTITY, AGENT_ID, owner, 1));
     }
 
-    function _wrap(EvmV1Decoder.LogEntryTuple[] memory logs, uint8 status) internal pure returns (bytes memory) {
-        bytes[] memory chunks = new bytes[](3);
-        chunks[0] = abi.encode(uint64(0), uint64(21_000), address(0x1), false, address(0x2), uint256(0), bytes(""));
-        chunks[1] = abi.encode(uint128(1), uint256(27), bytes32(0), bytes32(0));
-        chunks[2] = abi.encode(status, uint64(21_000), logs, bytes(""));
-        return abi.encode(uint8(0), chunks);
-    }
-
-    function _registeredLog(address emitter, uint256 agentId, address agentOwner)
-        internal
-        view
-        returns (EvmV1Decoder.LogEntryTuple memory)
-    {
-        bytes32[] memory topics = new bytes32[](3);
-        topics[0] = oracle.REGISTERED_SIG();
-        topics[1] = bytes32(agentId);
-        topics[2] = bytes32(uint256(uint160(agentOwner)));
-        return EvmV1Decoder.LogEntryTuple({address_: emitter, topics: topics, data: abi.encode("ipfs://card")});
-    }
-
-    function _registeredTx(address emitter, uint256 agentId, address agentOwner, uint8 status)
-        internal
-        view
-        returns (bytes memory)
-    {
-        EvmV1Decoder.LogEntryTuple[] memory logs = new EvmV1Decoder.LogEntryTuple[](1);
-        logs[0] = _registeredLog(emitter, agentId, agentOwner);
-        return _wrap(logs, status);
-    }
-
-    function _twoRegisteredLogsTx(
-        address emitterA,
-        uint256 agentA,
-        address ownerA,
-        address emitterB,
-        uint256 agentB,
-        address ownerB
-    ) internal view returns (bytes memory) {
-        EvmV1Decoder.LogEntryTuple[] memory logs = new EvmV1Decoder.LogEntryTuple[](2);
-        logs[0] = _registeredLog(emitterA, agentA, ownerA);
-        logs[1] = _registeredLog(emitterB, agentB, ownerB);
-        return _wrap(logs, 1);
-    }
-
-    /// Mirrors the real NewFeedback layout: three indexed topics, and data that
-    /// begins with feedbackIndex, value and valueDecimals before four strings
-    /// and a hash. The contract decodes only the leading three.
-    function _feedbackTx(
-        address emitter,
-        uint256 agentId,
-        address clientAddress,
-        uint64 feedbackIndex,
-        int128 value,
-        uint8 valueDecimals,
-        uint8 status
-    ) internal view returns (bytes memory) {
-        bytes32[] memory topics = new bytes32[](4);
-        topics[0] = oracle.NEW_FEEDBACK_SIG();
-        topics[1] = bytes32(agentId);
-        topics[2] = bytes32(uint256(uint160(clientAddress)));
-        topics[3] = keccak256(bytes("delivery"));
-
-        bytes memory data = abi.encode(
-            feedbackIndex,
-            value,
-            valueDecimals,
-            "delivery",
-            "onTime",
-            "https://agent.example/endpoint",
-            "ipfs://feedback",
-            bytes32(uint256(0xFEED))
-        );
-
-        EvmV1Decoder.LogEntryTuple[] memory logs = new EvmV1Decoder.LogEntryTuple[](1);
-        logs[0] = EvmV1Decoder.LogEntryTuple({address_: emitter, topics: topics, data: data});
-        return _wrap(logs, status);
-    }
 }
