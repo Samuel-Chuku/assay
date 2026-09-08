@@ -57,18 +57,28 @@ export function evidenceHash(evidence: EvidenceBundle): string {
 
 type Cache = Record<string, LoggedVerdict>;
 
+/**
+ * Cache entries are keyed by evidence *and* model. The evidence hash identifies
+ * the facts; the model identifies who read them. Keying on evidence alone would
+ * replay one model's judgment after the operator switched to another, which is
+ * the opposite of an audit trail.
+ */
+function cacheKey(hash: string, model: string): string {
+  return `${hash}::${model}`;
+}
+
 function load(): Cache {
   if (!existsSync(CACHE_PATH)) return {};
   return JSON.parse(readFileSync(CACHE_PATH, 'utf8')) as Cache;
 }
 
-export function readCached(hash: string): LoggedVerdict | null {
-  return load()[hash] ?? null;
+export function readCached(hash: string, model: string): LoggedVerdict | null {
+  return load()[cacheKey(hash, model)] ?? null;
 }
 
-export function writeCached(hash: string, entry: LoggedVerdict): void {
+export function writeCached(hash: string, model: string, entry: LoggedVerdict): void {
   mkdirSync('underwriter/verdicts', { recursive: true });
   const cache = load();
-  cache[hash] = entry;
+  cache[cacheKey(hash, model)] = entry;
   writeFileSync(CACHE_PATH, `${JSON.stringify(cache, null, 2)}\n`);
 }

@@ -13,10 +13,10 @@
     "seed:sepolia": "tsx scripts/seed-sepolia.ts",
     "seed:prove": "tsx scripts/prove-seed.ts",
     "test:underwriter": "tsx underwriter/envelope.check.ts",
-    "test": "pnpm test:contracts && pnpm test:underwriter"
+    "test": "pnpm test:contracts && pnpm test:underwriter",
+    "underwrite:qualify": "tsx scripts/qualify-model.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.124.0",
     "@gluwa/asc-contracts": "0.2.1",
     "@gluwa/usc-sdk": "0.18.0",
     "@openzeppelin/contracts": "5.4.0",

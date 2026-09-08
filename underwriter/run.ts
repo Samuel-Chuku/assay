@@ -28,6 +28,7 @@ import { extractSignals } from './signals';
 import { buildUnderwriterPrompt, UNDERWRITER_SYSTEM } from './prompt';
 import { preflight, refusalVerdict, clamp } from './envelope';
 import { evidenceHash, readCached, writeCached } from './cache';
+import { LLM_MODEL } from '../config/underwriting';
 import { logVerdict, reasoningHash, type LoggedVerdict } from './verdict';
 
 function render(entry: LoggedVerdict, replayed: boolean): void {
@@ -96,7 +97,7 @@ async function main(): Promise<void> {
   }
 
   if (!fresh) {
-    const cached = readCached(hash);
+    const cached = readCached(hash, LLM_MODEL);
     if (cached) {
       render({ ...cached, source: 'cache' }, true);
       console.log(`\n  identical evidence was already judged at ${cached.decidedAt}.`);
@@ -123,7 +124,7 @@ async function main(): Promise<void> {
   };
 
   const path = logVerdict(entry);
-  writeCached(hash, entry);
+  writeCached(hash, judgment.model, entry);
   render(entry, false);
   console.log(`  logged to       ${path}`);
 }
