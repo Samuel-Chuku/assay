@@ -1,0 +1,200 @@
+/* ============================================================
+   Assay — design tokens
+   Drop in as web/app/tokens.css. Never hardcode a value that
+   exists here. Never add a token in a component file.
+   ============================================================ */
+
+:root {
+  /* ---- Ground & surface ---------------------------------- */
+  --as-paper:     #F2EDE1;  /* desktop ground */
+  --as-surface:   #FBF8F0;  /* window interior */
+  --as-sunk:      #E8E1D2;  /* input wells, empty meters */
+
+  /* ---- Ink ------------------------------------------------ */
+  --as-ink:       #1A1A1A;  /* borders, shadows, all primary text */
+  --as-ink-dim:   #6B6459;  /* labels, secondary, pending */
+  --as-ink-faint: #A39B8C;  /* disabled, hatch lines */
+
+  /* ---- Semantic ------------------------------------------
+     PROOF is the one law: it means a value came through the
+     Attestcoin readability path and carries two explorer
+     links. It is never decoration and never a button.        */
+  --as-proof:     #0B7FBF;  /* proven from another chain */
+  --as-proof-dim: #7FB8D9;  /* proof, de-emphasised (borders) */
+  --as-frozen:    #E8A89A;  /* frozen line, refused application */
+  --as-settled:   #A8DCC8;  /* repaid, healthy utilisation */
+
+  /* ---- Ambient: wallpaper only, never carries meaning ----- */
+  --as-wave:      #A9D6DD;
+
+  /* ---- Borders: thick outlines, soft corners -------------- */
+  --as-bw:        2px;      /* controls, meters, chips */
+  --as-bw-chrome: 3px;      /* windows, menu bar */
+
+  --as-r-window:  10px;
+  --as-r-control:  6px;
+  --as-r-chip:     4px;
+
+  /* ---- Shadow: hard, down-right, single source ------------ */
+  --as-shadow-1: 2px 2px 0 0 var(--as-ink);
+  --as-shadow-2: 4px 4px 0 0 var(--as-ink);
+  --as-shadow-3: 6px 6px 0 0 var(--as-ink);
+  --as-shadow-pressed: 0 0 0 0 var(--as-ink);
+
+  /* ---- Space: 4px grid ------------------------------------ */
+  --as-1:  4px;
+  --as-2:  8px;
+  --as-3: 12px;
+  --as-4: 16px;
+  --as-5: 24px;
+  --as-6: 32px;
+  --as-7: 48px;
+
+  /* ---- Type ----------------------------------------------- */
+  --as-chrome: 'Space Mono', ui-monospace, monospace;
+  --as-data:   'IBM Plex Mono', ui-monospace, monospace;
+
+  --as-size-title:   15px;  --as-lh-title:   20px;
+  --as-size-menu:    12px;  --as-lh-menu:    16px;
+  --as-size-heading: 18px;  --as-lh-heading: 24px;
+  --as-size-data-xl: 28px;  --as-lh-data-xl: 32px;
+  --as-size-data:    14px;  --as-lh-data:    20px;
+  --as-size-body:    13px;  --as-lh-body:    20px;
+  --as-size-label:   11px;  --as-lh-label:   16px;
+
+  --as-track-label: 0.5px;
+
+  /* ---- Window chrome geometry ----------------------------- */
+  --as-titlebar-h: 32px;
+  --as-menubar-h:  36px;
+  --as-dot:        10px;   /* the ○ ○ traffic lights */
+
+  /* ---- Motion: instant or linear, never eased ------------- */
+  --as-dur: 120ms;
+  --as-ease: linear;
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+body {
+  background: var(--as-paper);
+  color: var(--as-ink);
+  font-family: var(--as-data);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Every figure is tabular. A live block height must not jitter. */
+.as-num,
+table,
+input[type='number'] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+:focus-visible {
+  outline: var(--as-bw) solid var(--as-proof);
+  outline-offset: var(--as-bw);
+}
+
+/* ============================================================
+   Fact states — the four ways a value can appear
+   ============================================================ */
+
+/* PROVEN: came through Attestcoin. Requires two explorer links. */
+.as-proven {
+  color: var(--as-proof);
+}
+
+/* PENDING: inside the 8-10 minute attestation window. */
+.as-pending {
+  color: var(--as-ink-dim);
+}
+.as-pending::before {
+  content: '◐ ';
+}
+
+/* UNPROVEN: local state. Plain ink. No marker, no apology. */
+.as-unproven {
+  color: var(--as-ink);
+}
+
+/* STALE: past its freshness bound. Fail-closed, made visible. */
+.as-stale {
+  color: var(--as-ink-dim);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* ============================================================
+   Hatch — for loading blocks and frozen regions.
+   Replaces shimmer skeletons entirely.
+   ============================================================ */
+
+.as-hatch {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--as-ink-faint) 0 1px,
+    transparent 1px 5px
+  );
+}
+
+.as-hatch-frozen {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--as-frozen) 0 2px,
+    transparent 2px 6px
+  );
+}
+
+/* ============================================================
+   Window primitive — every region of content lives in one
+   ============================================================ */
+
+.as-window {
+  background: var(--as-surface);
+  border: var(--as-bw-chrome) solid var(--as-ink);
+  border-radius: var(--as-r-window);
+  box-shadow: var(--as-shadow-2);
+  overflow: hidden;
+}
+
+.as-titlebar {
+  height: var(--as-titlebar-h);
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+  padding: 0 var(--as-3);
+  border-bottom: var(--as-bw) solid var(--as-ink);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-title);
+}
+
+.as-dots {
+  display: flex;
+  gap: var(--as-1);
+}
+.as-dots span {
+  width: var(--as-dot);
+  height: var(--as-dot);
+  border: 1.5px solid var(--as-ink);
+  border-radius: 50%;
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

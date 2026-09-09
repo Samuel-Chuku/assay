@@ -1,0 +1,249 @@
+/* ============================================================
+   Assay — chrome
+   Everything tokens.css does not already define. tokens.css is a
+   verbatim copy of the design reference and is never edited, so
+   the two font bindings below override it from here instead.
+   No token values are declared in this file beyond those two.
+   ============================================================ */
+
+/* next/font generates the real family names at build time, so the
+   two type tokens are rebound to its variables. Loaded after
+   tokens.css, so these win. */
+:root {
+  --as-chrome: var(--font-space-mono), ui-monospace, monospace;
+  --as-data: var(--font-ibm-plex-mono), ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================================
+   Wallpaper — two flat shapes, fixed, never parallax.
+   The only ornament in the system.
+   ============================================================ */
+
+.as-wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.as-wallpaper span {
+  position: absolute;
+  display: block;
+  background: var(--as-wave);
+}
+
+/* Both sit mostly off-canvas so only a curved edge shows. The paper ground has
+   to stay the dominant surface — this is wallpaper behind a desktop, not a
+   picture the windows are placed on top of. */
+.as-wallpaper span:first-child {
+  width: 58vmax;
+  height: 58vmax;
+  left: -24vmax;
+  bottom: -30vmax;
+  border-radius: 50%;
+}
+
+.as-wallpaper span:last-child {
+  width: 40vmax;
+  height: 40vmax;
+  right: -18vmax;
+  top: -14vmax;
+  border-radius: 50%;
+}
+
+/* ============================================================
+   Desktop shell
+   ============================================================ */
+
+.as-desktop {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  padding-top: var(--as-menubar-h);
+}
+
+/* ============================================================
+   MenuBar — pinned, three zones, status on the right
+   ============================================================ */
+
+.as-menubar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  height: var(--as-menubar-h);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--as-3);
+  padding: 0 var(--as-3);
+  background: var(--as-surface);
+  border-bottom: var(--as-bw-chrome) solid var(--as-ink);
+  font-family: var(--as-chrome);
+  font-size: var(--as-size-menu);
+  line-height: var(--as-lh-menu);
+}
+
+.as-menubar-items {
+  display: flex;
+  align-items: center;
+  gap: var(--as-3);
+  min-width: 0;
+}
+
+.as-menubar-mark {
+  font-size: var(--as-size-title);
+}
+
+.as-menubar-item {
+  color: var(--as-ink);
+  text-decoration: none;
+  padding: var(--as-1) var(--as-1);
+  border-radius: var(--as-r-chip);
+  transition: background var(--as-dur) var(--as-ease);
+}
+
+.as-menubar-item:hover {
+  background: var(--as-sunk);
+}
+
+.as-menubar-name {
+  font-weight: 700;
+  letter-spacing: var(--as-track-label);
+  white-space: nowrap;
+}
+
+/* The best real estate on the page: proof the system is live
+   against two chains, with no explanation required. */
+.as-menubar-status {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+  font-family: var(--as-data);
+  font-size: var(--as-size-menu);
+  white-space: nowrap;
+}
+
+.as-menubar-status .as-sep {
+  color: var(--as-ink-faint);
+}
+
+/* Current: the attestor network is keeping up. */
+.as-bolt-current {
+  color: var(--as-proof);
+}
+
+/* Behind: gap past its bound. Dim, not red — this is normal. */
+.as-bolt-behind {
+  color: var(--as-ink-dim);
+}
+
+/* ============================================================
+   Window body
+   ============================================================ */
+
+/* A window never widens the page it sits on. */
+.as-window {
+  max-width: 100%;
+}
+
+.as-window-body {
+  padding: var(--as-4);
+}
+
+.as-titlebar-title {
+  text-transform: uppercase;
+  letter-spacing: var(--as-track-label);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.as-titlebar-spacer {
+  flex: 1 1 auto;
+}
+
+/* The only case where a window's chrome changes colour. */
+.as-window-frozen {
+  border-color: var(--as-frozen);
+}
+
+/* ============================================================
+   Loading — hatched blocks and a blinking caret. No shimmer.
+   ============================================================ */
+
+.as-hatch-block {
+  display: inline-block;
+  height: var(--as-lh-menu);
+  border: 1px solid var(--as-ink-faint);
+  border-radius: var(--as-r-chip);
+  vertical-align: middle;
+}
+
+/* Width of a hatched stand-in for a block height, sized to the digits it
+   replaces so the bar does not reflow when the real number arrives. */
+.as-hatch-height {
+  width: 96px;
+}
+
+.as-caret {
+  animation: as-blink 1s steps(2) infinite;
+}
+
+@keyframes as-blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ============================================================
+   Responsive — windows stack at full width under 900px
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .as-menubar {
+    grid-template-columns: 1fr auto;
+    gap: var(--as-2);
+  }
+
+  /* The centred name is the first thing to go; the status line
+     earns its place and the menu items are the navigation. */
+  .as-menubar-name {
+    display: none;
+  }
+}
+
+/* Below this the bar cannot hold both the menu items and the status line. The
+   status stays: it is the proof the system is live, and navigation is also
+   reachable from the icon strip. Letting the bar overflow instead would widen
+   the whole page and push every window off-screen. */
+@media (max-width: 560px) {
+  .as-menubar-item {
+    display: none;
+  }
+
+  .as-menubar-status {
+    font-size: var(--as-size-label);
+    gap: var(--as-1);
+  }
+
+  .as-hatch-height {
+    width: 64px;
+  }
+}
