@@ -14,7 +14,9 @@
     "seed:prove": "tsx scripts/prove-seed.ts",
     "test:underwriter": "tsx underwriter/envelope.check.ts",
     "test": "pnpm test:contracts && pnpm test:underwriter",
-    "underwrite:qualify": "tsx scripts/qualify-model.ts"
+    "underwrite:qualify": "tsx scripts/qualify-model.ts",
+    "verdicts:export": "tsx scripts/export-verdicts.ts",
+    "line:open": "tsx scripts/open-line.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",

@@ -114,12 +114,18 @@ try {
       'Runtime.evaluate',
       {
         expression:
-          'JSON.stringify({inner: innerWidth, scroll: document.documentElement.scrollWidth})',
+          'JSON.stringify({inner: innerWidth, scroll: document.documentElement.scrollWidth, title: document.title, body: document.body.innerText.slice(0,80)})',
         returnByValue: true,
       },
       sessionId
     );
-    const { inner, scroll } = JSON.parse(result.value);
+    const { inner, scroll, title, body } = JSON.parse(result.value);
+
+    // A screenshot of Chrome's own error page reports "no overflow" and looks
+    // like a pass. Refuse to call that a result.
+    if (/refused to connect|can.t be reached|ERR_/i.test(body) || !title) {
+      throw new Error(`the page did not load (title: ${title || 'none'}) — is the server up?`);
+    }
     const overflow = scroll > inner ? `  OVERFLOW by ${scroll - inner}px` : '  no overflow';
     console.log(`${size.name}  viewport ${inner}  scrollWidth ${scroll}${overflow}  -> ${file}`);
   }

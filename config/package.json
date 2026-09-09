@@ -1,5 +1,15 @@
 {
   "name": "@assay/config",
   "private": true,
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "exports": {
+    "./chains": "./chains.ts",
+    "./deployments": "./deployments.ts",
+    "./events": "./events.ts",
+    "./demo": "./demo.ts",
+    "./underwriting": "./underwriting.ts",
+    "./demo-agents.json": "./demo-agents.json",
+    "./abi": "./abi.ts",
+    "./verdicts.json": "./verdicts.json"
+  }
 }

@@ -40,6 +40,18 @@ importers:
 
   web:
     dependencies:
+      '@assay/config':
+        specifier: workspace:*
+        version: link:../config
+      '@gluwa/usc-sdk':
+        specifier: 0.18.0
+        version: 0.18.0(debug@4.4.3)
+      dotenv:
+        specifier: 17.4.2
+        version: 17.4.2
+      ethers:
+        specifier: ^6.17.0
+        version: 6.17.0
       next:
         specifier: ^15.5.4
         version: 15.5.25(@types/node@26.1.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -49,6 +61,9 @@ importers:
       react-dom:
         specifier: ^19.1.1
         version: 19.2.8(react@19.2.8)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
     devDependencies:
       '@types/node':
         specifier: 26.1.0
@@ -683,6 +698,9 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  server-only@0.0.1:
+    resolution: {integrity: sha512-qepMx2JxAa5jjfzxG79yPPq+8BuFToHd1hm7kI+Z4zAq1ftQiP7HcxMhDDItrbtwVeLg/cY2JnKnrcFkmiswNA==}
+
   sharp@0.35.4:
     resolution: {integrity: sha512-n++8XWcj+jCOr2IOl7h8LbKnGBDY4aPbmprMONBNFdn0ImXqpGVv5zliDs0V9HbmbCQLpbuo2ej9rAoOQTvMDA==}
     engines: {node: '>=20.9.0'}
@@ -1231,6 +1249,8 @@ snapshots:
 
   semver@7.8.5:
     optional: true
+
+  server-only@0.0.1: {}
 
   sharp@0.35.4(@types/node@26.1.0):
     dependencies:

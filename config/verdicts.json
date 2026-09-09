@@ -1,0 +1,67 @@
+[
+  {
+    "agentId": 10128,
+    "approve": false,
+    "credit_limit": "0",
+    "collateral_ratio": 0,
+    "rate_bps": 0,
+    "confidence": 1,
+    "reasoning": "Refused before underwriting, on a deterministic rule rather than a judgment. No proven feedback at all. There is no track record to read, so there is no judgment to make. This is not an assessment of the agent's quality: the evidence itself is unusable, so no assessment is possible.",
+    "evidence_used": [
+      "agent 10128 on oracle 0x76131b6547b584e9f101618239A26B2aCCd8aA43",
+      "rule: no-record"
+    ],
+    "decidedAt": "2026-09-08T06:07:15.607Z",
+    "model": "deterministic-envelope",
+    "reasoningHash": "0x3c39bb26d2fb2e651ba945cc26aab219a7b0ffc8ddf1571a59e71059153cd5c8",
+    "source": "envelope",
+    "adjustments": []
+  },
+  {
+    "agentId": 10155,
+    "approve": true,
+    "credit_limit": "2.0",
+    "collateral_ratio": 0.6,
+    "rate_bps": 1800,
+    "confidence": 0.35,
+    "reasoning": "Agent 10155 is a brand-new identity: 0.0 days proven, no track record over time, and no payment wallet set at all. That last point matters on its own - there is no proven address to which draws or repayments can be pinned, which is a operational gap independent of reputation quality. On the reputation side, the record is small but not fabricated-looking: 3 entries, 3 distinct counterparties, each holding its own proven ERC-8004 identity, and no single counterparty above 33% share. That is the better shape of evidence described in policy - modest volume, spread across independent staked parties, rather than a large one-payer average. The mean of 0.92 (range 0.88-0.95) is consistent and not suspiciously perfect. However, three entries is a thin sample, all at feedback index 1 for each counterparty (i.e., each party has only rated once, and there is no visible time spread given identity age of 0.0 days - meaning all three data points effectively arrived at once). That looks like a burst rather than a track record built over time, which is exactly the pattern the policy asks me to be wary of, even though the raters themselves are legitimate. Given: real but sparse and freshly-burst evidence, from genuine counterparties, on an identity with zero operating history and no payment wallet, I will extend a small credit line rather than refuse outright - the counterparty quality is real signal - but size and price it for the uncertainty. Collateral of 60% and 18% rate reflect 'plausible but unproven.' I would raise the limit and cut the rate materially if: entries accumulate over real elapsed time (not a single burst), the counterparty count grows beyond 3, a payment wallet is set and stays stable, and higher feedback indices appear per counterparty (repeat business). I would refuse or shrink the line further if the identity changes owner, if a payment wallet appears then changes again shortly after, or if new entries come from addresses without proven identities.",
+    "evidence_used": [
+      "Identity proven for 0.0 days, newest evidence 0.0 days old",
+      "Payment wallet not set",
+      "0 identity transfers, 0 payment wallet changes",
+      "3 total feedback entries, 3 distinct counterparties, largest single share 33%",
+      "3 of 3 counterparties hold a proven ERC-8004 identity; 0% of entries from unproven counterparties",
+      "Mean feedback value 0.92, range 0.88 to 0.95",
+      "Each counterparty's highest feedback index is 1, indicating single, simultaneous-looking interactions rather than a time-spread history"
+    ],
+    "decidedAt": "2026-09-08T06:27:32.569Z",
+    "model": "anthropic/claude-sonnet-5",
+    "reasoningHash": "0xec73aaf3506d0db488c58eb968714f604e3c367242421d1339292184978a2490",
+    "source": "judgment",
+    "adjustments": [
+      "credit limit reduced from 150 to the 2.0 tCTC policy ceiling"
+    ]
+  },
+  {
+    "agentId": 10156,
+    "approve": false,
+    "credit_limit": "0",
+    "collateral_ratio": 0,
+    "rate_bps": 0,
+    "confidence": 0.9,
+    "reasoning": "This is the exact fabricated-record pattern the underwriting policy warns against: a near-perfect average (mean 0.99, range 0.98-1.00) built entirely from one counterparty (0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F), which supplies 100% of the 5 entries and holds no proven ERC-8004 identity of its own. There is zero counterparty breadth to evidence market acceptance, zero independent standing behind the only rater, and the identity itself has been proven on Creditcoin for 0.0 days with the newest evidence also 0.0 days old -- meaning the entire history, however many months it may span on Sepolia, was only just proven, and all five ratings could equally have been written in a single burst by the operator funding a second address to rate itself, which costs almost nothing. No payment wallet is even set, so there is no proven economic activity trail beyond the feedback entries themselves. There is nothing here that distinguishes this from a wallet the borrower funded solely to inflate its own average: one counterparty, no external stake, no time depth, no breadth. I am not swayed by the high mean value -- a modest record from several independent, established counterparties would be a materially better risk than this, even at a lower average. Given the complete absence of independent verification, I decline to extend any credit line at this time. What would change my mind: proven feedback from at least two or three distinct counterparties, ideally including at least one that itself holds a proven ERC-8004 identity; entries spread over a meaningful time window rather than concentrated in one proof event; and/or a payment wallet with an on-chain transaction history corroborating real settled work. Any of those would let me reconsider a small, heavily collateralized starter line.",
+    "evidence_used": [
+      "total entries 5, distinct counterparties 1, largest single share 100%",
+      "counterparties holding a proven identity: 0 of 1; share of entries from counterparties with no proven identity: 100%",
+      "sole counterparty 0xa4bbeb8408ae52c6695fe0d3306902529815dc6f holds no proven ERC-8004 identity",
+      "identity proven for 0.0 days; newest evidence 0.0 days old",
+      "payment wallet not set",
+      "mean value 0.99, range 0.98 to 1.00 across all 5 entries from the single counterparty"
+    ],
+    "decidedAt": "2026-09-08T06:27:48.452Z",
+    "model": "anthropic/claude-sonnet-5",
+    "reasoningHash": "0x34e3cc34416bd736d2927cdddfd880afa5f795c8b9a8e4a8a46b68e3bea8c724",
+    "source": "judgment",
+    "adjustments": []
+  }
+]

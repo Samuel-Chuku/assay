@@ -247,3 +247,570 @@ body {
     width: 64px;
   }
 }
+
+/* ============================================================
+   Type roles from the reference
+   ============================================================ */
+
+.as-label {
+  font-size: var(--as-size-label);
+  line-height: var(--as-lh-label);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--as-track-label);
+  color: var(--as-ink-dim);
+}
+
+.as-caption {
+  margin: var(--as-4) 0 0;
+  padding-top: var(--as-3);
+  border-top: 1px solid var(--as-sunk);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+/* ============================================================
+   TxLink — a hash never appears without its chain
+   ============================================================ */
+
+.as-txlink {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--as-1);
+  text-decoration: none;
+  color: var(--as-proof);
+  border-radius: var(--as-r-chip);
+}
+
+.as-txlink:hover .as-txlink-hash {
+  text-decoration: underline;
+}
+
+.as-txlink-chain {
+  font-size: var(--as-size-label);
+  letter-spacing: var(--as-track-label);
+  color: var(--as-ink-dim);
+}
+
+.as-txlink-hash {
+  font-size: var(--as-size-data);
+}
+
+/* ============================================================
+   ProofRow — the signature element
+   ============================================================ */
+
+.as-evidence-intro {
+  margin: 0 0 var(--as-3);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+.as-evidence-intro code {
+  font-family: var(--as-data);
+  font-size: var(--as-size-body);
+}
+
+/* The one window allowed to scroll internally. */
+.as-evidence-rows {
+  max-height: 420px;
+  overflow-y: auto;
+  border-top: 1px solid var(--as-sunk);
+}
+
+.as-proofrow {
+  padding: var(--as-3) 0;
+  border-bottom: 1px solid var(--as-sunk);
+}
+
+.as-proofrow p {
+  margin: 0;
+}
+
+.as-proofrow-what {
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-proofrow-detail {
+  color: var(--as-ink-dim);
+}
+
+.as-proofrow-sep {
+  color: var(--as-ink-faint);
+}
+
+.as-proofrow-emitter {
+  margin-top: var(--as-1) !important;
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-registry-tag {
+  font-size: var(--as-size-label);
+  letter-spacing: var(--as-track-label);
+  color: var(--as-ink-dim);
+}
+
+.as-proofrow-links {
+  margin-top: var(--as-1) !important;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--as-2);
+}
+
+.as-proofrow-arrow {
+  color: var(--as-ink-faint);
+}
+
+.as-proofrow-meta {
+  margin-top: var(--as-1) !important;
+  font-size: var(--as-size-label);
+  line-height: var(--as-lh-label);
+  color: var(--as-ink-dim);
+}
+
+/* ============================================================
+   Empty, error and other states — never a blank region
+   ============================================================ */
+
+.as-state {
+  margin: 0;
+  padding: var(--as-4);
+  background: var(--as-sunk);
+  border-radius: var(--as-r-control);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+.as-state strong {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+}
+
+/* ============================================================
+   Page — windows down a desktop, not a document
+   ============================================================ */
+
+.as-page {
+  display: grid;
+  gap: var(--as-5);
+  padding: var(--as-5);
+  max-width: 880px;
+}
+
+@media (max-width: 560px) {
+  .as-page {
+    padding: var(--as-4) var(--as-3);
+    gap: var(--as-4);
+  }
+}
+
+/* ============================================================
+   Field rows — label left, value right
+   ============================================================ */
+
+.as-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 11rem) 1fr;
+  gap: var(--as-1) var(--as-3);
+  margin: 0 0 var(--as-3);
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-fields dt {
+  margin: 0;
+}
+
+.as-fields dd {
+  margin: 0;
+}
+
+/* ============================================================
+   Verdict — derived from proven facts, never itself proven,
+   so never blue.
+   ============================================================ */
+
+.as-verdict-approved {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  color: var(--as-ink);
+}
+
+.as-verdict-declined {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  color: var(--as-frozen);
+}
+
+.as-reasoning {
+  max-width: 62ch;
+  padding: var(--as-4) 0;
+  border-top: 1px solid var(--as-sunk);
+  border-bottom: 1px solid var(--as-sunk);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  white-space: pre-wrap;
+}
+
+.as-adjustments {
+  padding-top: var(--as-3);
+}
+
+.as-adjustments ul {
+  margin: var(--as-1) 0 0;
+  padding-left: var(--as-4);
+  font-size: var(--as-size-body);
+}
+
+/* ============================================================
+   Freeze banner
+   ============================================================ */
+
+.as-freeze-banner {
+  margin: 0 0 var(--as-3);
+  padding: var(--as-3);
+  background: var(--as-frozen);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  box-shadow: var(--as-shadow-1);
+  color: var(--as-ink);
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-freeze-banner strong {
+  font-family: var(--as-chrome);
+}
+
+/* ============================================================
+   Meter
+   ============================================================ */
+
+.as-meter {
+  display: flex;
+  align-items: center;
+  gap: var(--as-3);
+  margin-bottom: var(--as-2);
+}
+
+.as-meter-label {
+  min-width: 6.5rem;
+}
+
+.as-meter-track {
+  display: block;
+  width: 160px;
+  height: 14px;
+  background: var(--as-sunk);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.as-meter-fill {
+  display: block;
+  height: 100%;
+}
+
+.as-meter-attestation {
+  background: var(--as-proof);
+}
+.as-meter-utilisation {
+  background: var(--as-settled);
+}
+.as-meter-drawn {
+  background: var(--as-ink);
+}
+
+.as-meter-value {
+  font-size: var(--as-size-data);
+}
+
+/* ============================================================
+   Credit line
+   ============================================================ */
+
+.as-statemachine {
+  margin: 0 0 var(--as-3);
+  font-family: var(--as-chrome);
+  font-size: var(--as-size-menu);
+  line-height: var(--as-lh-menu);
+}
+
+.as-state-current {
+  font-weight: 700;
+  color: var(--as-ink);
+}
+
+.as-state-other {
+  color: var(--as-ink-faint);
+}
+
+.as-statemachine-arrow {
+  color: var(--as-ink-faint);
+}
+
+.as-amounts {
+  display: flex;
+  gap: var(--as-6);
+  margin-bottom: var(--as-3);
+}
+
+.as-amounts > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.as-amount {
+  font-size: var(--as-size-data-xl);
+  line-height: var(--as-lh-data-xl);
+}
+
+/* ============================================================
+   Controls
+   ============================================================ */
+
+.as-button {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-menu);
+  text-transform: uppercase;
+  padding: 10px 18px;
+  background: var(--as-surface);
+  color: var(--as-ink);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  box-shadow: var(--as-shadow-2);
+  cursor: pointer;
+  transition: background var(--as-dur) var(--as-ease);
+}
+
+.as-button:hover:not(:disabled) {
+  background: var(--as-sunk);
+}
+
+.as-button:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: var(--as-shadow-pressed);
+}
+
+.as-button:disabled {
+  color: var(--as-ink-faint);
+  border-color: var(--as-ink-faint);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.as-input {
+  background: var(--as-sunk);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  padding: 10px;
+  font-family: var(--as-data);
+  font-size: var(--as-size-data);
+  color: var(--as-ink);
+  width: 8rem;
+}
+
+.as-actions {
+  margin-top: var(--as-4);
+  padding-top: var(--as-3);
+  border-top: 1px solid var(--as-sunk);
+}
+
+.as-actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+  flex-wrap: wrap;
+}
+
+.as-walletbar {
+  margin-bottom: var(--as-3);
+}
+
+.as-walletbar-address {
+  font-size: var(--as-size-data);
+}
+
+.as-error {
+  background: var(--as-frozen);
+  cursor: pointer;
+}
+
+/* ============================================================
+   Agent index
+   ============================================================ */
+
+.as-agent-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--as-sunk);
+}
+
+.as-agent-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr 6rem 6rem 1rem;
+  gap: var(--as-3);
+  align-items: center;
+  padding: var(--as-3) var(--as-1);
+  border-bottom: 1px solid var(--as-sunk);
+  text-decoration: none;
+  color: var(--as-ink);
+  font-size: var(--as-size-data);
+}
+
+.as-agent-row:hover {
+  background: var(--as-sunk);
+}
+
+.as-agent-id {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+}
+
+.as-agent-verdict,
+.as-agent-line {
+  font-size: var(--as-size-label);
+  letter-spacing: var(--as-track-label);
+  color: var(--as-ink-dim);
+}
+
+@media (max-width: 560px) {
+  .as-agent-row {
+    grid-template-columns: 4rem 1fr 1rem;
+  }
+  .as-agent-line {
+    display: none;
+  }
+}
+
+/* ============================================================
+   Landing
+   ============================================================ */
+
+.as-landing {
+  max-width: 940px;
+}
+
+.as-hero-headline {
+  margin: 0 0 var(--as-4);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-heading);
+  line-height: var(--as-lh-heading);
+}
+
+.as-hero-body {
+  margin: 0 0 var(--as-3);
+  max-width: 52ch;
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-hero-actions {
+  display: flex;
+  gap: var(--as-3);
+  flex-wrap: wrap;
+  margin: var(--as-4) 0 0;
+}
+
+/* A link styled as a button still has to look pressable. */
+a.as-button {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.as-steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: var(--as-5);
+}
+
+.as-step-body {
+  margin: 0;
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+@media (max-width: 900px) {
+  .as-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Composition — a desktop, not a document.
+   Windows sit in a deliberate two-column arrangement and overlap
+   slightly at the edges, rather than stacking as equal cards.
+   Collapses to one column under 1000px.
+   ============================================================ */
+
+@media (min-width: 1000px) {
+  .as-landing,
+  .as-detail {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--as-6);
+  }
+
+  /* Hero holds the left column; the meters tuck into its bottom-right. */
+  .as-w-hero {
+    grid-column: 1;
+  }
+
+  .as-w-live {
+    grid-column: 2;
+    margin-left: calc(var(--as-6) * -1);
+    margin-top: var(--as-7);
+    z-index: 2;
+  }
+
+  /* Offset right, as the reference sets the problem statement. */
+  .as-w-problem {
+    grid-column: 2;
+    margin-top: calc(var(--as-5) * -1);
+  }
+
+  .as-w-steps,
+  .as-w-wide {
+    grid-column: 1 / -1;
+  }
+
+  .as-w-limits {
+    grid-column: 1;
+    margin-right: calc(var(--as-6) * -1);
+    z-index: 2;
+  }
+
+  .as-w-footer {
+    grid-column: 1 / -1;
+  }
+
+  /* Detail: the reasoning is tall, so it takes the left column and the
+     shorter identity and line windows stack beside it. */
+  .as-w-verdict {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .as-w-identity {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .as-w-lineinfo {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .as-w-evidence {
+    grid-column: 1 / -1;
+  }
+}

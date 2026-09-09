@@ -3,7 +3,8 @@ import { IBM_Plex_Mono, Space_Mono } from 'next/font/google';
 
 import './tokens.css';
 import './chrome.css';
-import { MenuBar } from './components/MenuBar';
+import { LiveMenuBar } from './components/LiveMenuBar';
+import { WalletProvider } from './components/wallet';
 
 /**
  * Chrome: window titles, the menu bar, headings, buttons. Its slightly odd
@@ -40,12 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <span />
         </div>
 
-        {/* Status is null until the chains are actually read. Wiring that up
-            is the next step; rendering a placeholder number here would be a
-            claim we have not verified. */}
-        <MenuBar status={null} />
-
-        <div className="as-desktop">{children}</div>
+        <WalletProvider>
+          <LiveMenuBar />
+          <div className="as-desktop">{children}</div>
+        </WalletProvider>
       </body>
     </html>
   );

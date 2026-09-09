@@ -9,3 +9,6 @@ contracts/cache/
 web/.next/
 web/out/
 *.tsbuildinfo
+
+# Design skill: local tooling, not product source
+web/.claude/
