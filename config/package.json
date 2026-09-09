@@ -10,6 +10,7 @@
     "./underwriting": "./underwriting.ts",
     "./demo-agents.json": "./demo-agents.json",
     "./abi": "./abi.ts",
-    "./verdicts.json": "./verdicts.json"
+    "./verdicts.json": "./verdicts.json",
+    "./watcher": "./watcher.ts"
   }
 }

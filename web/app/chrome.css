@@ -909,3 +909,172 @@ a.as-button {
   gap: var(--as-2);
   min-width: 0;
 }
+
+/* ============================================================
+   Menu bar: connect control
+   ============================================================ */
+
+.as-menubar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--as-ink-faint);
+}
+
+.as-connect {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: var(--as-track-label);
+  padding: 5px 10px;
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+  color: var(--as-ink);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--as-dur) var(--as-ease);
+}
+
+.as-connect:hover {
+  background: var(--as-sunk);
+}
+
+/* Connected is a state, not a control. */
+.as-connect-on {
+  cursor: default;
+  font-family: var(--as-data);
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--as-1);
+}
+
+.as-connect-on:hover {
+  background: var(--as-surface);
+}
+
+.as-connect-dot {
+  color: var(--as-settled);
+}
+
+.as-connect-wrong {
+  background: var(--as-frozen);
+}
+
+.as-connect-none {
+  border-style: dashed;
+  border-color: var(--as-ink-faint);
+  color: var(--as-ink-dim);
+  cursor: default;
+}
+
+/* ============================================================
+   Evidence, as cards
+   ------------------------------------------------------------
+   Four dense lines separated by a hairline were hard to scan.
+   Each fact is now a bordered card with its own ground, and the
+   event name leads at heading weight so the eye has somewhere to
+   land before it reaches the hashes.
+   ============================================================ */
+
+.as-evidence-rows {
+  max-height: 560px;
+  overflow-y: auto;
+  border-top: none;
+  display: grid;
+  gap: var(--as-3);
+  padding-right: var(--as-1);
+}
+
+.as-proofrow {
+  padding: var(--as-3) var(--as-4);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  background: var(--as-sunk);
+  box-shadow: var(--as-shadow-1);
+}
+
+.as-proofrow p {
+  margin: 0;
+}
+
+.as-proofrow-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--as-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--as-1);
+}
+
+.as-proofrow-event {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-proofrow-agent {
+  font-size: var(--as-size-label);
+  letter-spacing: var(--as-track-label);
+  color: var(--as-ink-dim);
+  text-transform: uppercase;
+}
+
+.as-proofrow-detail {
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+  margin-bottom: var(--as-2) !important;
+}
+
+.as-proofrow-emitter {
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+  margin-bottom: var(--as-1) !important;
+}
+
+.as-proofrow-links {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--as-2);
+  padding: var(--as-2) 0;
+  border-top: 1px solid var(--as-sunk);
+  border-bottom: 1px solid var(--as-sunk);
+  margin-bottom: var(--as-2) !important;
+}
+
+.as-proofrow-meta {
+  display: flex;
+  gap: var(--as-4);
+  font-size: var(--as-size-label);
+  line-height: var(--as-lh-label);
+  color: var(--as-ink-dim);
+}
+
+/* ============================================================
+   Bolder hierarchy
+   ============================================================ */
+
+.as-hero-headline {
+  font-size: 26px;
+  line-height: 32px;
+}
+
+.as-titlebar {
+  font-size: var(--as-size-title);
+}
+
+.as-fields dd {
+  font-weight: 500;
+}
+
+@media (max-width: 560px) {
+  .as-hero-headline {
+    font-size: 20px;
+    line-height: 26px;
+  }
+  .as-proofrow {
+    padding: var(--as-3);
+  }
+}

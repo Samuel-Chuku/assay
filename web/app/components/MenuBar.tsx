@@ -1,3 +1,4 @@
+import { ConnectButton } from './ConnectButton';
 import { ThemeToggle } from './ThemeToggle';
 
 /**
@@ -34,10 +35,10 @@ export type ChainStatus = {
 export type MenuItem = { label: string; href: string };
 
 const DEFAULT_ITEMS: MenuItem[] = [
-  { label: 'Agents', href: '#agents' },
-  { label: 'Evidence', href: '#evidence' },
-  { label: 'Pool', href: '#pool' },
-  { label: 'About', href: '#about' },
+  { label: 'Agents', href: '/app' },
+  { label: 'Evidence', href: '/#evidence' },
+  { label: 'Pool', href: '/app#pool' },
+  { label: 'About', href: '/#about' },
 ];
 
 type MenuBarProps = {
@@ -66,6 +67,8 @@ export function MenuBar({ name = 'ASSAY', items = DEFAULT_ITEMS, status = null }
 
       <div className="as-menubar-right">
         <ChainHeights status={status} />
+        <span className="as-menubar-divider" aria-hidden="true" />
+        <ConnectButton />
         <ThemeToggle />
       </div>
     </nav>

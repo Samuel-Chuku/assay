@@ -1,5 +1,5 @@
 /**
- * Underwrites one agent.
+ * Underwrites one agent, from the command line.
  *
  * Usage: pnpm underwrite <agentId> [--dossier] [--fresh]
  *
@@ -8,14 +8,7 @@
  *   --fresh    ignore the cache and ask again. Only useful when deliberately
  *              re-examining identical evidence.
  *
- * The pipeline is deterministic at both ends and a judgment in the middle:
- *
- *   evidence -> signals -> preflight -> cache -> judgment -> clamp -> log
- *
- * Everything except the judgment is a pure function of chain state. The
- * judgment is asked once per distinct set of facts and replayed thereafter, so
- * the same evidence always yields the same verdict even though the model that
- * produced it is not reproducible.
+ * The work itself lives in ./underwrite, because the watcher needs it too.
  *
  * Rule 7, fail closed. If the evidence is unusable or the judge is unavailable,
  * this refuses. It never substitutes a default decision, because a silent
@@ -23,13 +16,8 @@
  */
 import 'dotenv/config';
 
-import { gatherEvidence } from './evidence';
-import { extractSignals } from './signals';
-import { buildUnderwriterPrompt, UNDERWRITER_SYSTEM } from './prompt';
-import { preflight, refusalVerdict, clamp } from './envelope';
-import { evidenceHash, readCached, writeCached } from './cache';
-import { LLM_MODEL } from '../config/underwriting';
-import { logVerdict, reasoningHash, type LoggedVerdict } from './verdict';
+import { dossier, underwrite } from './underwrite';
+import type { LoggedVerdict } from './verdict';
 
 function render(entry: LoggedVerdict, replayed: boolean): void {
   console.log(`Agent ${entry.agentId}\n`);
@@ -57,76 +45,28 @@ function render(entry: LoggedVerdict, replayed: boolean): void {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const agentId = Number(args[0]);
-  const dossierOnly = args.includes('--dossier');
-  const fresh = args.includes('--fresh');
 
   if (!Number.isInteger(agentId) || agentId <= 0) {
     throw new Error('usage: pnpm underwrite <agentId> [--dossier] [--fresh]');
   }
 
-  const evidence = await gatherEvidence(agentId);
-  const signals = extractSignals(evidence);
-
-  if (dossierOnly) {
-    console.log(buildUnderwriterPrompt(evidence, signals));
+  if (args.includes('--dossier')) {
+    console.log(await dossier(agentId));
     return;
   }
 
-  const hash = evidenceHash(evidence);
+  const { entry, replayed, logPath } = await underwrite(agentId, {
+    fresh: args.includes('--fresh'),
+  });
 
-  // Deterministic refusals come first, so unusable evidence never costs a call.
-  const gate = preflight(evidence, signals);
-  if (gate.refuse) {
-    const entry: LoggedVerdict = {
-      ...refusalVerdict(gate, evidence),
-      agentId,
-      decidedAt: new Date().toISOString(),
-      model: 'deterministic-envelope',
-      reasoningHash: '',
-      evidenceHash: hash,
-      source: 'envelope',
-      adjustments: [],
-      evidence,
-      signals,
-    };
-    entry.reasoningHash = reasoningHash(entry.reasoning);
-    const path = logVerdict(entry);
-    render(entry, false);
-    console.log(`  logged to       ${path}`);
-    return;
+  render(entry, replayed);
+
+  if (replayed) {
+    console.log(`\n  identical evidence was already judged at ${entry.decidedAt}.`);
+    console.log('  Re-examine it with --fresh.');
+  } else {
+    console.log(`  logged to       ${logPath}`);
   }
-
-  if (!fresh) {
-    const cached = readCached(hash, LLM_MODEL);
-    if (cached) {
-      render({ ...cached, source: 'cache' }, true);
-      console.log(`\n  identical evidence was already judged at ${cached.decidedAt}.`);
-      console.log('  Re-examine it with --fresh.');
-      return;
-    }
-  }
-
-  const { judge } = await import('./judge');
-  const judgment = await judge(UNDERWRITER_SYSTEM, buildUnderwriterPrompt(evidence, signals));
-  const held = clamp(judgment.verdict);
-
-  const entry: LoggedVerdict = {
-    ...held.verdict,
-    agentId,
-    decidedAt: new Date().toISOString(),
-    model: judgment.model,
-    reasoningHash: reasoningHash(held.verdict.reasoning),
-    evidenceHash: hash,
-    source: 'judgment',
-    adjustments: held.adjustments,
-    evidence,
-    signals,
-  };
-
-  const path = logVerdict(entry);
-  writeCached(hash, judgment.model, entry);
-  render(entry, false);
-  console.log(`  logged to       ${path}`);
 }
 
 main().catch((error) => {

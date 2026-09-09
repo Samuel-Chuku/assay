@@ -16,7 +16,8 @@
     "test": "pnpm test:contracts && pnpm test:underwriter",
     "underwrite:qualify": "tsx scripts/qualify-model.ts",
     "verdicts:export": "tsx scripts/export-verdicts.ts",
-    "line:open": "tsx scripts/open-line.ts"
+    "line:open": "tsx scripts/open-line.ts",
+    "watch": "tsx worker/watch.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",

@@ -1,7 +1,7 @@
 /**
  * Proves one Sepolia transaction onto Creditcoin through AssayOracle.
  *
- * Usage: pnpm prove <sepolia-tx-hash> <registration|feedback>
+ * Usage: pnpm prove <sepolia-tx-hash> <registration|feedback|transfer|wallet>
  *
  * T3: attestation of a recent Sepolia block takes 8 to 10 minutes by design, so
  * the source chain can reorganise without invalidating an attestation. This
@@ -25,8 +25,17 @@ import { DEPLOYMENTS } from '../config/deployments';
 
 const ARTIFACT = 'contracts/out/AssayOracle.sol/AssayOracle.json';
 
-/** Matches AssayOracle.Action. */
-export const ACTIONS = { registration: 0, feedback: 1 } as const;
+/**
+ * Matches AssayOracle.Action, all four of them. The transfer and wallet cases
+ * are how the T8 and T9 freeze triggers reach the chain, so a prover that only
+ * knew about registrations and feedback could never fire them.
+ */
+export const ACTIONS = {
+  registration: 0,
+  feedback: 1,
+  transfer: 2,
+  wallet: 3,
+} as const;
 export type ActionName = keyof typeof ACTIONS;
 
 const EXECUTE_SIGNATURE =
@@ -134,7 +143,7 @@ export async function prove(txHash: string, actionName: ActionName): Promise<str
 async function main(): Promise<void> {
   const [txHash, action] = process.argv.slice(2);
   if (!txHash || !(action in ACTIONS)) {
-    throw new Error('usage: pnpm prove <sepolia-tx-hash> <registration|feedback>');
+    throw new Error('usage: pnpm prove <sepolia-tx-hash> <registration|feedback|transfer|wallet>');
   }
   await prove(txHash, action as ActionName);
 }

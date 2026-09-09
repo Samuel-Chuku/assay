@@ -21,13 +21,15 @@ import { TxLink, truncate } from './TxLink';
 export function ProofRow({ fact }: { fact: ProvenFact }) {
   return (
     <article className="as-proofrow">
-      <p className="as-proofrow-what">
-        {fact.eventName} <span className="as-proofrow-sep">·</span> agent #{fact.agentId}
-        <span className="as-proofrow-detail"> {fact.detail}</span>
-      </p>
+      <header className="as-proofrow-head">
+        <span className="as-proofrow-event">{fact.eventName}</span>
+        <span className="as-proofrow-agent">agent #{fact.agentId}</span>
+      </header>
+
+      <p className="as-proofrow-detail">{fact.detail}</p>
 
       <p className="as-proofrow-emitter">
-        <span className="as-label">emitter</span>{' '}
+        <span className="as-label">emitted by</span>{' '}
         <span className="as-proven as-num" title={`${fact.emitterName} · ${fact.emitter}`}>
           {truncate(fact.emitter)}
         </span>{' '}
@@ -42,16 +44,16 @@ export function ProofRow({ fact }: { fact: ProvenFact }) {
         <TxLink chain="CC3" hash={fact.verificationTxHash} />
       </p>
 
-      <p className="as-proofrow-meta">
-        block {fact.sourceBlock}
+      <footer className="as-proofrow-meta">
+        <span>
+          block <span className="as-num">{fact.sourceBlock}</span>
+        </span>
         {fact.attestationDelaySeconds !== null ? (
-          <>
-            {' '}
-            <span className="as-proofrow-sep">·</span> attested{' '}
-            {formatDelay(fact.attestationDelaySeconds)}
-          </>
+          <span className="as-proofrow-delay">
+            attested <span className="as-num">{formatDelay(fact.attestationDelaySeconds)}</span>
+          </span>
         ) : null}
-      </p>
+      </footer>
     </article>
   );
 }

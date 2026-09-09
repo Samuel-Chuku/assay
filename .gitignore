@@ -12,3 +12,6 @@ web/out/
 
 # Design skill: local tooling, not product source
 web/.claude/
+
+# watcher progress, machine-local
+worker/watch-state.json
