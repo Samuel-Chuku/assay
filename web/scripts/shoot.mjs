@@ -19,7 +19,15 @@ import { join } from 'node:path';
 const CHROME = process.env.CHROME_BIN ?? 'google-chrome';
 const PORT = 9222 + Math.floor(Math.random() * 500);
 
-const [url, outDir, ...sizeArgs] = process.argv.slice(2);
+const [url, outDir, ...rest] = process.argv.slice(2);
+/**
+ * --dark / --light force the theme the toggle would set. Forcing matters:
+ * headless Chrome reports prefers-color-scheme: dark by default, so an
+ * unforced capture silently tests only one of the two palettes.
+ */
+const theme = rest.includes('--dark') ? 'dark' : rest.includes('--light') ? 'light' : null;
+const dark = theme === 'dark';
+const sizeArgs = rest.filter((a) => !a.startsWith('--'));
 if (!url || !outDir) {
   console.error('usage: node scripts/shoot.mjs <url> <outDir> [WxH ...]');
   process.exit(1);
@@ -106,8 +114,17 @@ try {
     // Fonts and layout settle; there are no animations to wait on by design.
     await sleep(1800);
 
+    if (theme) {
+      await send(
+        'Runtime.evaluate',
+        { expression: `document.documentElement.dataset.theme = '${theme}'` },
+        sessionId
+      );
+      await sleep(300);
+    }
+
     const { data } = await send('Page.captureScreenshot', { format: 'png' }, sessionId);
-    const file = join(outDir, `${size.name}.png`);
+    const file = join(outDir, `${size.name}${theme ? `-${theme}` : ''}.png`);
     writeFileSync(file, Buffer.from(data, 'base64'));
 
     const { result } = await send(

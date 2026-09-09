@@ -1,3 +1,5 @@
+import { ThemeToggle } from './ThemeToggle';
+
 /**
  * The bar pinned to the top of every route.
  *
@@ -62,7 +64,10 @@ export function MenuBar({ name = 'ASSAY', items = DEFAULT_ITEMS, status = null }
 
       <span className="as-menubar-name">{name}</span>
 
-      <ChainHeights status={status} />
+      <div className="as-menubar-right">
+        <ChainHeights status={status} />
+        <ThemeToggle />
+      </div>
     </nav>
   );
 }

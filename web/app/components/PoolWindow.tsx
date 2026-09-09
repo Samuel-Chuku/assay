@@ -8,9 +8,9 @@ import { Window } from './Window';
  * two-sided market rather than a faucet, so correctness matters more than
  * presentation.
  */
-export function PoolWindow({ pool, id = 'pool' }: { pool: Pool; id?: string }) {
+export function PoolWindow({ pool, id = 'pool', className }: { pool: Pool; id?: string; className?: string }) {
   return (
-    <Window title="Lending pool" id={id}>
+    <Window title="Lending pool" id={id} className={className}>
       <dl className="as-fields">
         <dt className="as-label">Total deposited</dt>
         <dd className="as-num">{pool.totalAssets} tCTC</dd>

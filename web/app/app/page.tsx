@@ -15,8 +15,8 @@ export default async function AppPage() {
   ]);
 
   return (
-    <main className="as-page">
-      <Window title="Agents" id="agents">
+    <main className="as-page as-detail">
+      <Window title="Agents" id="agents" className="as-w-verdict">
         <p className="as-evidence-intro">
           Every agent whose ERC-8004 identity has been proven onto Creditcoin. The verdict column is
           the underwriter&rsquo;s judgment on that proven history.
@@ -51,9 +51,9 @@ export default async function AppPage() {
         )}
       </Window>
 
-      {pool ? <PoolWindow pool={pool} /> : null}
+      {pool ? <PoolWindow pool={pool} className="as-w-identity" /> : null}
 
-      {agents[0] ? <AgentCard agent={agents[0]} id="latest" /> : null}
+      {agents[0] ? <AgentCard agent={agents[0]} id="latest" className="as-w-lineinfo" /> : null}
     </main>
   );
 }

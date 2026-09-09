@@ -128,7 +128,6 @@ body {
 /* The best real estate on the page: proof the system is live
    against two chains, with no explanation required. */
 .as-menubar-status {
-  justify-self: end;
   display: flex;
   align-items: center;
   gap: var(--as-2);
@@ -398,7 +397,8 @@ body {
   display: grid;
   gap: var(--as-5);
   padding: var(--as-5);
-  max-width: 880px;
+  max-width: 1180px;
+  margin-inline: auto;
 }
 
 @media (max-width: 560px) {
@@ -696,7 +696,7 @@ body {
    ============================================================ */
 
 .as-landing {
-  max-width: 940px;
+  max-width: 1180px;
 }
 
 .as-hero-headline {
@@ -813,4 +813,99 @@ a.as-button {
   .as-w-evidence {
     grid-column: 1 / -1;
   }
+}
+
+/* ============================================================
+   Dark mode
+   ============================================================
+
+   The reference is a warm-paper artefact, so this is not an
+   inversion: it is the same desk at night. Ink and paper swap
+   roles, which means the hard shadows become light against a
+   dark ground — that is correct, not a bug.
+
+   Proof blue is the one colour that cannot simply carry over.
+   #0B7FBF passes on paper and fails on a dark ground, so the
+   dark palette lifts it to a lighter blue that still reads as
+   the same semantic. Nothing else becomes blue.
+
+   Applied by system preference, and overridden by an explicit
+   choice on the root element. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --as-paper: #17140F;
+    --as-surface: #211D16;
+    --as-sunk: #2C271E;
+
+    --as-ink: #F2EDE1;
+    --as-ink-dim: #A79E8E;
+    --as-ink-faint: #6B6459;
+
+    --as-proof: #5CB6E6;
+    --as-proof-dim: #2F6E90;
+    --as-frozen: #E0A092;
+    --as-settled: #8FC9B4;
+
+    --as-wave: #24454C;
+  }
+}
+
+:root[data-theme='dark'] {
+  --as-paper: #17140F;
+  --as-surface: #211D16;
+  --as-sunk: #2C271E;
+
+  --as-ink: #F2EDE1;
+  --as-ink-dim: #A79E8E;
+  --as-ink-faint: #6B6459;
+
+  --as-proof: #5CB6E6;
+  --as-proof-dim: #2F6E90;
+  --as-frozen: #E0A092;
+  --as-settled: #8FC9B4;
+
+  --as-wave: #24454C;
+}
+
+/* The frozen accent is a light wash on paper and would swamp a dark
+   surface, so on dark it carries meaning through the border and text
+   rather than a filled banner. */
+:root[data-theme='dark'] .as-freeze-banner {
+  background: transparent;
+  border-color: var(--as-frozen);
+  color: var(--as-frozen);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .as-freeze-banner {
+    background: transparent;
+    border-color: var(--as-frozen);
+    color: var(--as-frozen);
+  }
+}
+
+.as-theme-toggle {
+  background: none;
+  border: none;
+  padding: var(--as-1);
+  margin: 0;
+  font-family: var(--as-chrome);
+  font-size: var(--as-size-title);
+  color: var(--as-ink);
+  cursor: pointer;
+  border-radius: var(--as-r-chip);
+  line-height: 1;
+}
+
+.as-theme-toggle:hover {
+  background: var(--as-sunk);
+}
+
+.as-menubar-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+  min-width: 0;
 }

@@ -34,6 +34,15 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${spaceMono.variable} ${plexMono.variable}`}>
+      <head>
+        {/* Applied before first paint so the page never flashes the wrong
+            palette. With no stored choice the system preference decides. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('assay-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         {/* The only ornament in the system. Flat shapes, fixed, no parallax. */}
         <div className="as-wallpaper" aria-hidden="true">
