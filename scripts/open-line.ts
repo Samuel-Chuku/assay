@@ -18,7 +18,7 @@ import { ethers } from 'ethers';
 import { CREDIT_LINE_ABI, ASSAY_ORACLE_ABI } from '../config/abi';
 import { CREDITCOIN, GAS_LIMIT_MULTIPLIER } from '../config/chains';
 import { DEPLOYMENTS } from '../config/deployments';
-import { CREDIT_PARAMS } from '../config/demo';
+import { CREDIT_PARAMS, DEMO_WALLET_COUNT } from '../config/demo';
 
 const STATES = ['None', 'Offered', 'Active', 'Frozen', 'Repaid', 'Defaulted'];
 
@@ -83,7 +83,7 @@ async function main(): Promise<void> {
 
   // Which derived wallet owns this agent?
   let borrower: ethers.Wallet | null = null;
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= DEMO_WALLET_COUNT; i++) {
     const candidate = derive(deployerKey, i);
     if (candidate.address.toLowerCase() === String(record.currentOwner).toLowerCase()) {
       borrower = candidate.connect(provider) as ethers.Wallet;

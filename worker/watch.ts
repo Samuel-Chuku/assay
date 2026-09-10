@@ -26,7 +26,9 @@ import 'dotenv/config';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { ethers } from 'ethers';
 
-import { ASSAY_ORACLE_ABI } from '../config/abi';
+import { chainInfo } from '@gluwa/usc-sdk';
+
+import { ASSAY_ORACLE_ABI, CREDIT_LINE_ABI } from '../config/abi';
 import { REGISTRIES, SEPOLIA } from '../config/chains';
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '../config/deployments';
 import { IDENTITY_EVENTS, REPUTATION_EVENTS } from '../config/events';
@@ -125,34 +127,83 @@ async function scan(sep: ethers.JsonRpcProvider, state: State, tracked: Set<numb
     toBlock: to,
   });
 
-  let queued = 0;
+  /**
+   * One transaction, one action. This is not a preference, it is a hard limit.
+   *
+   * `queryId` is derived from chain key, block height and transaction index, and
+   * ASCBase rejects a repeat — so a source transaction can only ever be proven
+   * once, whichever action goes first. Selling an identity emits `Transfer` and
+   * `MetadataSet` together, and proving the wallet half first permanently
+   * destroys the chance to record the ownership change. That happened: the
+   * wallet proof cost 206k gas and recorded nothing, because clearing an unset
+   * wallet is not a change, and the transfer then became unprovable.
+   *
+   * So pick the most consequential action per transaction. A transfer outranks
+   * a wallet change because it always implies one — the registry clears the
+   * wallet on transfer — while the reverse is not true.
+   */
+  const priority: Record<ActionName, number> = {
+    transfer: 4,
+    registration: 3,
+    feedback: 2,
+    wallet: 1,
+  };
+
+  const best = new Map<string, Pending>();
   for (const entry of logs) {
     const hit = classify(entry);
     if (!hit || !tracked.has(hit.agentId)) continue;
     if (state.proven.includes(entry.transactionHash)) continue;
-    if (state.pending.some((p) => p.txHash === entry.transactionHash && p.action === hit.action)) continue;
+    if (state.pending.some((p) => p.txHash === entry.transactionHash)) continue;
 
-    state.pending.push({
+    const existing = best.get(entry.transactionHash);
+    if (existing && priority[existing.action] >= priority[hit.action]) continue;
+
+    best.set(entry.transactionHash, {
       txHash: entry.transactionHash,
       blockNumber: entry.blockNumber,
       action: hit.action,
       agentId: hit.agentId,
       firstSeen: new Date().toISOString(),
     });
-    queued++;
   }
+
+  state.pending.push(...best.values());
+  const queued = best.size;
 
   state.lastScannedBlock = to;
   if (queued > 0) log(`scanned ${from}-${to}: queued ${queued} new event(s)`);
   saveState(state);
 }
 
-async function proveReady(state: State): Promise<Set<number>> {
+async function proveReady(state: State, cc: ethers.JsonRpcProvider): Promise<Set<number>> {
   const touched = new Set<number>();
   const day = today();
   state.spend[day] ??= 0;
 
-  for (const item of [...state.pending]) {
+  /**
+   * Check attestation coverage here rather than letting prove() wait.
+   *
+   * prove() blocks for up to twenty minutes waiting for a height to be
+   * attested. That is right for a one-shot CLI and wrong for a loop: one
+   * unattested event stalls every item behind it, which is exactly what
+   * happened the first time this ran. The watcher's own polling interval is the
+   * waiting mechanism, so it only calls prove() for blocks already covered and
+   * leaves the rest for the next pass.
+   */
+  const attested = Number(
+    (
+      await new chainInfo.PrecompileChainInfoProvider(cc).getLatestAttestedHeightAndHash(
+        SEPOLIA.sourceChainKey
+      )
+    ).height
+  );
+
+  const ready = state.pending.filter((p) => p.blockNumber <= attested);
+  const holding = state.pending.length - ready.length;
+  if (holding > 0) log(`${holding} event(s) still inside the attestation window`);
+
+  for (const item of ready) {
     if (state.spend[day] >= WATCHER.maxProofsPerDay) {
       log(`daily proof ceiling reached (${WATCHER.maxProofsPerDay}); holding the rest`);
       break;
@@ -178,12 +229,55 @@ async function proveReady(state: State): Promise<Set<number>> {
         continue;
       }
 
-      // Not attested yet is the normal case, not a failure.
-      log(`  not ready: ${message.slice(0, 90)}`);
+      /**
+       * A proof the oracle refuses will be refused forever, so drop it rather
+       * than paying to retry every minute. A registration emits a mint
+       * Transfer, which is deliberately not a change of hands, and carries no
+       * agentWallet key — both are nothing to record, not failures.
+       */
+      if (message.includes('No ') || message.includes('not proved yet')) {
+        log(`  nothing to record (${message.slice(0, 55)}); dropping`);
+        state.proven.push(item.txHash);
+        state.pending = state.pending.filter((p) => p !== item);
+        saveState(state);
+        continue;
+      }
+
+      log(`  deferred: ${message.slice(0, 90)}`);
     }
   }
 
   return touched;
+}
+
+/**
+ * Write down any freeze the new evidence just triggered.
+ *
+ * Proving a transfer moves the oracle's counter, which makes a draw revert
+ * straight away — but the line's *recorded* state stays Active until somebody
+ * calls `freezeIfTriggered`. An unattended operator is exactly who should make
+ * that call, so the chain says what is true without waiting for a person.
+ */
+async function recordFreezes(agentIds: Set<number>, cc: ethers.JsonRpcProvider): Promise<void> {
+  const key = process.env.DEPLOYER_PRIVATE_KEY!;
+  const wallet = new ethers.Wallet(key.startsWith('0x') ? key : `0x${key}`, cc);
+  const credit = new ethers.Contract(DEPLOYMENTS.creditLine, CREDIT_LINE_ABI, wallet);
+
+  for (const agentId of agentIds) {
+    try {
+      const line = await credit.getLine(agentId);
+      if (Number(line.state) !== 2) continue; // only an Active line can freeze
+
+      const reason = Number(await credit.pendingFreezeReason(agentId));
+      if (reason === 0) continue;
+
+      const tx = await credit.freezeIfTriggered(agentId);
+      const receipt = await tx.wait();
+      log(`froze agent ${agentId}, reason ${reason} — ${receipt?.hash}`);
+    } catch (error) {
+      log(`freeze check for ${agentId} failed: ${(error as Error).message.slice(0, 80)}`);
+    }
+  }
 }
 
 async function reUnderwrite(agentIds: Set<number>): Promise<void> {
@@ -205,8 +299,11 @@ async function pass(sep: ethers.JsonRpcProvider, cc: ethers.JsonRpcProvider): Pr
   const tracked = await trackedAgents(cc);
 
   await scan(sep, state, tracked);
-  const touched = await proveReady(state);
-  if (touched.size > 0) await reUnderwrite(touched);
+  const touched = await proveReady(state, cc);
+  if (touched.size > 0) {
+    await recordFreezes(touched, cc);
+    await reUnderwrite(touched);
+  }
 
   if (state.pending.length > 0) {
     log(`${state.pending.length} event(s) waiting on attestation`);

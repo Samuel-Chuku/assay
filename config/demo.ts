@@ -59,10 +59,10 @@ export const DEMO_POOL_DEPOSIT = '5.0';
  * reader that weighs counterparty breadth and standing does not. That is T13
  * made concrete, and it is the demo's best moment.
  *
- * Wallet 0 is the deployer. Wallets 1 to 4 are derived from it, see
+ * Wallet 0 is the deployer. Wallets 1 to 5 are derived from it, see
  * `scripts/seed-sepolia.ts`.
  */
-export const DEMO_WALLET_COUNT = 4;
+export const DEMO_WALLET_COUNT = 5;
 
 /** Sepolia ETH sent to each derived wallet. Measured need is under a third of this. */
 export const DEMO_WALLET_FUNDING = '0.004';
@@ -88,6 +88,18 @@ export const DEMO_CAST = {
     name: 'Corvus Audit Agent',
     description: 'Testnet demo agent for Assay. Acts as a counterparty with its own registered identity.',
   },
+  /**
+   * Owned by wallet 5. Underwritten and funded exactly like `approved`, then
+   * its identity is deliberately sold on Sepolia so the T8 freeze trigger
+   * fires against a live credit line. It exists so the freeze can be
+   * demonstrated without destroying the healthy approval.
+   */
+  frozen: {
+    ownerIndex: 5,
+    name: 'Peregrine Logistics Agent',
+    description:
+      'Testnet demo agent for Assay. Underwritten on a real record, then its identity is transferred to show the credit line freeze.',
+  },
 } as const;
 
 /**
@@ -106,6 +118,12 @@ export const DEMO_FEEDBACK = {
     { raterIndex: 4, value: 99, tag1: 'quality', tag2: 'excellent' },
     { raterIndex: 4, value: 98, tag1: 'delivery', tag2: 'onTime' },
     { raterIndex: 4, value: 100, tag1: 'quality', tag2: 'excellent' },
+  ],
+  /** Same shape as `approved`, so it earns a line worth freezing. */
+  frozen: [
+    { raterIndex: 0, value: 90, tag1: 'delivery', tag2: 'onTime' },
+    { raterIndex: 2, value: 93, tag1: 'quality', tag2: 'accurate' },
+    { raterIndex: 3, value: 91, tag1: 'delivery', tag2: 'onTime' },
   ],
 } as const;
 

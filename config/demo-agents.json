@@ -4,7 +4,8 @@
     "1": "0x491b8312717d5406f52b7287FdD9773Cfcc6cAc6",
     "2": "0xa0f67760468D678b5C2138bf0D0319aa569644eE",
     "3": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
-    "4": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F"
+    "4": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
+    "5": "0xcb51778C3252770Ad07AA03234D9310E69937d50"
   },
   "agents": {
     "approved": {
@@ -21,6 +22,11 @@
       "agentId": 10157,
       "owner": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
       "registrationTx": "0xddf1a3705d5c2c6f53495bd660001371287e2c6f906ebafdd7b23e989dc4b35b"
+    },
+    "frozen": {
+      "agentId": 10195,
+      "owner": "0xcb51778C3252770Ad07AA03234D9310E69937d50",
+      "registrationTx": "0xc50a0a06722b37695749188bcd7ee8da5da4c39ef8a2a5367a57af5e995286b4"
     }
   },
   "feedback": [
@@ -71,6 +77,24 @@
       "rater": "0xA4bBeB8408aE52C6695Fe0d3306902529815dC6F",
       "value": 100,
       "tx": "0xa6d0c636e930c0e1c2bde00efbaaa6aece775f9ee15eba1257f1cd9f7ad9d381"
+    },
+    {
+      "agentKey": "frozen",
+      "rater": "0x4B11611CF7C90aEc2003721d71107d7E1cBf37c2",
+      "value": 90,
+      "tx": "0x76c96f83f37c936d22b87b342099aec638d6691edf7df24a495e780b9b9c43e4"
+    },
+    {
+      "agentKey": "frozen",
+      "rater": "0xa0f67760468D678b5C2138bf0D0319aa569644eE",
+      "value": 93,
+      "tx": "0x50d39a630353e441696364b22a88c61d2adf43462cb5c8b73afffe702abd84ec"
+    },
+    {
+      "agentKey": "frozen",
+      "rater": "0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf",
+      "value": 91,
+      "tx": "0xa83b43243cdf677f6a5c91dde9115fa7b93870f8d97146f8fd4db25e61c01ba9"
     }
   ],
   "proven": [
@@ -84,6 +108,10 @@
     "0x92d2283c1dec2c651a16cd2096443f067ece56d71b17788905a9e6fc76683403",
     "0xfbe481ac12f861e432f35d36e7f5a5e6f018774c1eb776044d26cc23dec4ea6d",
     "0x7af1734c53c39c1e6de33741f8858b7c216b696b347ba4c5d19585da0f98010b",
-    "0xa6d0c636e930c0e1c2bde00efbaaa6aece775f9ee15eba1257f1cd9f7ad9d381"
+    "0xa6d0c636e930c0e1c2bde00efbaaa6aece775f9ee15eba1257f1cd9f7ad9d381",
+    "0xc50a0a06722b37695749188bcd7ee8da5da4c39ef8a2a5367a57af5e995286b4",
+    "0x76c96f83f37c936d22b87b342099aec638d6691edf7df24a495e780b9b9c43e4",
+    "0x50d39a630353e441696364b22a88c61d2adf43462cb5c8b73afffe702abd84ec",
+    "0xa83b43243cdf677f6a5c91dde9115fa7b93870f8d97146f8fd4db25e61c01ba9"
   ]
 }

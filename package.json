@@ -17,7 +17,8 @@
     "underwrite:qualify": "tsx scripts/qualify-model.ts",
     "verdicts:export": "tsx scripts/export-verdicts.ts",
     "line:open": "tsx scripts/open-line.ts",
-    "watch": "tsx worker/watch.ts"
+    "watch": "tsx worker/watch.ts",
+    "identity:sell": "tsx scripts/sell-identity.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",
