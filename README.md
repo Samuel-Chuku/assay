@@ -112,10 +112,7 @@ cp .env.example .env        # then fill it in
 pnpm check:chain            # verifies both chains, the precompile and funding
 ```
 
-`.env` needs a Sepolia RPC endpoint and a funded key. A funded endpoint such as
-Alchemy or Infura is strongly recommended over a public one: block reads on free
-endpoints have been measured above twenty seconds, which is slow enough to break
-serverless page rendering.
+`.env` needs a Sepolia RPC endpoint and a funded key.
 
 ```bash
 pnpm underwrite 10155              # form a judgment from proven facts

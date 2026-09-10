@@ -139,9 +139,9 @@ async function resolveSource(
   );
 
   /**
-   * Ask for the one transaction, not the whole block. Measured against a free
-   * Sepolia endpoint: fetching the block to index into its transaction list
-   * took 23.7s, while this single call took 0.35s for the same answer.
+   * Ask for the one transaction, not the whole block. Fetching the block
+   * transfers every transaction in it to read one: 411ms median against 260ms
+   * for this call, and a render resolves up to forty of them.
    */
   const sourceTx = (await retry(`Sepolia tx ${blockHeight}#${txIndex}`, 2, () =>
     sep.send('eth_getTransactionByBlockNumberAndIndex', [

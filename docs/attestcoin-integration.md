@@ -200,9 +200,19 @@ event signatures are fetched in one filtered request rather than four concurrent
 ones.
 
 **Ask for the transaction, not the block.** Resolving a source hash by fetching
-the Sepolia block and indexing into its transaction list took 23.7 seconds
-against a free endpoint. `eth_getTransactionByBlockNumberAndIndex` returned the
-same answer in 0.35 seconds.
+the whole Sepolia block and indexing into its transaction list transfers every
+transaction in that block to read one field of one of them.
+`eth_getTransactionByBlockNumberAndIndex` returns the same answer from a much
+smaller response, at a median of 260ms against 411ms over repeated samples. A
+single page render resolves up to forty of these, so the margin compounds.
+
+**Free endpoints degrade without warning, and that is the real risk.** An early
+measurement put the block fetch at 23.7 seconds. It is not reproducible; the
+same call against the same endpoint now returns in under half a second. What was
+actually being measured was a free-tier throttle, and on the same day every other
+free Sepolia endpoint was failing too. The lesson is not that the call is slow.
+It is that a fail-closed system renders empty when its endpoint degrades, so the
+endpoint deserves an API key even when the request volume does not require one.
 
 **Attestation coverage is queryable.** `PrecompileChainInfoProvider` reports the
 latest attested height for a chain key. That single value drives the watcher's
