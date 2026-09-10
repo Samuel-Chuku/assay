@@ -211,45 +211,414 @@ async function main(): Promise<void> {
 
   const out: string[] = [];
   const w = (s = '') => out.push(s);
+  /** Prose, wrapped. Long unwrapped lines are the main thing that makes a generated file unreadable. */
+  const para = (text: string) => {
+    for (const line of wrap(text, 74)) w(line);
+    w();
+  };
+
+  const verdictFor = (id: number) => verdicts.find((v) => v.agentId === id);
+  const lineFor = (id: number) => lines.find((l) => l.id === id)?.line;
+  const proofsFor = (id: number) => proofs.filter((p) => p.agentId === id);
+  const creditFor = (id: number) =>
+    creditEvents.filter((e) => e.args.agentId !== undefined && Number(e.args.agentId) === id);
+
+  /**
+   * A representative excerpt: enough sentences to carry the actual reason.
+   * One is not always enough, because a rule-based refusal opens by saying it
+   * is a rule-based refusal and only then says why.
+   */
+  const excerpt = (text: string) => {
+    const sentences = text.trim().split(/(?<=\.)\s+/);
+    const taken: string[] = [];
+    for (const sentence of sentences) {
+      taken.push(sentence);
+      if (taken.join(' ').length > 200) break;
+    }
+    return taken.join(' ');
+  };
 
   w('# Evidence');
   w();
-  w('Every claim in this project is a transaction on one of two chains. This file');
-  w('is generated from chain state by `pnpm evidence:export`, so the hashes below');
-  w('are read back out of the chains rather than written down.');
-  w();
-  w(`Generated ${new Date().toISOString().slice(0, 10)}.`);
-  w();
+  para(
+    'Assay makes claims about software agents: that one has a real work history, ' +
+      'that another faked its ratings, that a third sold its identity after ' +
+      'borrowing. Every one of those claims is a transaction on a public chain. ' +
+      'This file lists them so you can check any of it yourself.'
+  );
+  para(
+    `Generated ${new Date().toISOString().slice(0, 10)} by \`pnpm evidence:export\`, ` +
+      'which reads both chains live. The hashes below were not typed in.'
+  );
 
-  w('## Contracts');
+  w('## How to read this');
   w();
-  w('| What | Chain | Address |');
+  para('Two chains are involved, and everything moves in one direction between them.');
+  w(
+    `- **Ethereum Sepolia** holds the agents' work history, in two ERC-8004 registries that Assay did not deploy and cannot write to. Links to it go to Etherscan.`
+  );
+  w(
+    `- **Creditcoin** is where that history gets proven, and where the lending happens. Links to it go to Blockscout.`
+  );
+  w();
+  para(
+    'A fact happens on Ethereum. It is then proven onto Creditcoin, meaning ' +
+      'Creditcoin verified for itself that the Ethereum transaction really ' +
+      'happened and really succeeded. No middleman reports it, and no one is ' +
+      'asked to take anyone at their word. So most things below have two links: ' +
+      'the original event, and its proof.'
+  );
+
+  w('## The short version');
+  w();
+  para('Five agents appear here. This is what happened to each of them.');
+  w('| Agent | What it is | How it ended |');
   w('| --- | --- | --- |');
-  w(`| AssayOracle | Creditcoin | ${ccAddr(DEPLOYMENTS.assayOracle)} |`);
-  w(`| CreditLine | Creditcoin | ${ccAddr(DEPLOYMENTS.creditLine)} |`);
-  w(`| LendingPool | Creditcoin | ${ccAddr(DEPLOYMENTS.lendingPool)} |`);
-  w(`| ERC-8004 Identity | Sepolia | ${sepAddr(REGISTRIES.identity)} |`);
-  w(`| ERC-8004 Reputation | Sepolia | ${sepAddr(REGISTRIES.reputation)} |`);
+
+  type Story = { id: number; headline: string; what: string; ending: string };
+
+  const stories: Story[] = agentIds.map((id): Story => {
+    const v = verdictFor(id);
+    const line = lineFor(id);
+    const state = line ? Number(line.state) : 0;
+    const feedback = proofsFor(id).filter((p) => p.eventName === 'NewFeedback');
+    const raters = new Set(feedback.map((f) => f.detail.split('`')[1])).size;
+
+    if (state === 3) {
+      return {
+        id,
+        headline: 'approved, then frozen when its identity was sold',
+        what: `${feedback.length} ratings from ${raters} different clients`,
+        ending: '**Frozen.** Its identity was sold after it borrowed',
+      };
+    }
+    if (state === 4) {
+      return {
+        id,
+        headline: 'borrowed and repaid in full',
+        what: 'the first line Assay ever opened',
+        ending: '**Repaid.** Principal and interest returned, collateral released',
+      };
+    }
+    if (state === 2) {
+      return {
+        id,
+        headline: 'approved, and currently borrowing',
+        what: `${feedback.length} ratings from ${raters} different clients`,
+        ending: '**Active.** Drew against its line and still owes it',
+      };
+    }
+    if (v && !v.approve && v.source === 'judgment') {
+      return {
+        id,
+        headline: 'refused, despite having the best numbers here',
+        what: `${feedback.length} ratings, all from the same client`,
+        ending: '**Refused.** No credit offered',
+      };
+    }
+    if (v && !v.approve) {
+      return {
+        id,
+        headline: 'refused before the underwriter was called',
+        what: 'no usable history',
+        ending: '**Refused.** Declined by rule, no judgment needed',
+      };
+    }
+    return {
+      id,
+      headline: 'a client, not a borrower',
+      what: 'registered so it could rate other agents',
+      ending: 'Never applied for credit',
+    };
+  });
+
+  for (const s of stories) {
+    w(`| [${s.id}](#agent-${s.id}) | ${s.what} | ${s.ending} |`);
+  }
   w();
-  w('The two Sepolia registries are the trust anchor. Assay did not deploy them');
-  w('and cannot write to them. They are the only emitters the oracle accepts.');
+  const highlight = stories.find((s) => s.headline.startsWith('refused, despite'));
+  if (highlight) {
+    para(
+      `If you only read one part of this file, read agent ${highlight.id}. It has the ` +
+        'best raw numbers of anything here and it was turned down, which is the ' +
+        'whole reason this project sits in the AI track rather than the DeFi one.'
+    );
+  }
+
+  w('## Agent by agent');
+  w();
+  para('Each of these reads in order, from the agent appearing on Ethereum to whatever happened to its credit.');
+
+  for (const s of stories) {
+    const id = s.id;
+    const v = verdictFor(id);
+    const line = lineFor(id);
+    const mine = proofsFor(id);
+    const credit = creditFor(id);
+
+    w(`### Agent ${id}`);
+    w();
+    w(`*${s.headline[0].toUpperCase()}${s.headline.slice(1)}.*`);
+    w();
+
+    let step = 1;
+
+    const registered = mine.find((p) => p.eventName === 'Registered');
+    if (registered) {
+      w(
+        `**${step++}. It registered an identity on Ethereum.** ${registered.detail.replace('owner ', 'Owned by ')}.`
+      );
+      w();
+      w(
+        `${registered.sourceTxHash ? sepTx(registered.sourceTxHash) : 'source not resolved'} on Ethereum, proven on Creditcoin at ${ccTx(registered.ccTxHash)}.`
+      );
+      w();
+    }
+
+    const feedback = mine.filter((p) => p.eventName === 'NewFeedback');
+    if (feedback.length) {
+      const raters = [...new Set(feedback.map((f) => f.detail.split('`')[1]))];
+      w(
+        `**${step++}. It was rated ${feedback.length} time${feedback.length === 1 ? '' : 's'} by ${raters.length} client${raters.length === 1 ? '' : 's'}.**`
+      );
+      w();
+      if (raters.length === 1) {
+        para(
+          `Every rating came from the same address. Anyone can leave feedback ` +
+            `on any agent, so a run of high scores from one source is close to ` +
+            `worthless, and the underwriter is expected to notice.`
+        );
+      }
+      w('| Score | From | On Ethereum | Proven on Creditcoin |');
+      w('| --- | --- | --- | --- |');
+      for (const f of feedback) {
+        const [score, rest] = f.detail.split(' from ');
+        w(
+          `| ${score} | \`${rest?.split('`')[1] ?? '?'}\` | ${f.sourceTxHash ? sepTx(f.sourceTxHash) : '-'} | ${ccTx(f.ccTxHash)} |`
+        );
+      }
+      w();
+    }
+
+    const offer = credit.find((e) => e.name === 'LineOffered');
+
+    /**
+     * Where the verdict belongs in the story.
+     *
+     * A verdict is the agent's judgment as it stands now, while a line records
+     * what was true when it was offered. For an agent whose line came first and
+     * whose current answer is a refusal, telling it in file order would read as
+     * "declined, then given credit anyway". It is told last instead, as what it
+     * actually is: the system changing its mind after the facts moved.
+     */
+    const rejudged = Boolean(v && !v.approve && offer);
+
+    const writeVerdict = () => {
+      if (!v) return;
+      if (rejudged) {
+        w(`**${step++}. The underwriter has since changed its mind.**`);
+        w();
+        para(
+          'Evidence moved after this line was opened, so the agent was judged ' +
+            'again from the new facts. It would not be approved today.'
+        );
+      } else {
+        w(
+          `**${step++}. The underwriter ${v.approve ? 'approved it' : 'turned it down'}.**` +
+            (v.source === 'envelope'
+              ? ' Decided by a fixed rule before any model was consulted, because the evidence was unusable.'
+              : ' A judgment, formed by reading the proven facts above and nothing else.')
+        );
+        w();
+      }
+      for (const line of wrap(excerpt(v.reasoning), 74)) w(`> ${line}`);
+      w();
+      para(
+        `Its full reasoning is in the appendix. That text is hashed as ` +
+          `\`${v.reasoningHash.slice(0, 12)}…\` and bound into the decision on chain, so ` +
+          `it cannot be quietly rewritten afterwards.`
+      );
+    };
+
+    if (!rejudged) writeVerdict();
+
+    const accept = credit.find((e) => e.name === 'LineAccepted');
+    const drawn = credit.filter((e) => e.name === 'Drawn');
+    if (offer) {
+      w(
+        `**${step++}. A credit line was opened.** ${ctc(offer.args.limit)} limit at ${offer.args.interestBps} bps, against ${ctc(offer.args.collateralRequired)} of collateral.`
+      );
+      w();
+      w(`Offered ${ccTx(offer.hash)}${accept ? `, accepted ${ccTx(accept.hash)}` : ''}.`);
+      w();
+    }
+    if (drawn.length) {
+      w(
+        `**${step++}. It drew on the line.** ${drawn.map((d) => `${ctc(d.args.amount)} at ${ccTx(d.hash)}`).join(', ')}.`
+      );
+      w();
+      para('That money came out of the lending pool, which real deposits funded.');
+    }
+
+    const transfer = mine.find((p) => p.eventName === 'Transfer');
+    const frozen = credit.find((e) => e.name === 'LineFrozen');
+    if (transfer) {
+      w(`**${step++}. Its identity was sold on Ethereum.** ${transfer.detail}.`);
+      w();
+      para(
+        `This is the attack the system exists to catch: build a record, borrow ` +
+          `against it, then hand the identity to someone with no history at all. ` +
+          `The evidence that earned the credit no longer describes whoever now ` +
+          `holds it.`
+      );
+      w(
+        `Sold ${transfer.sourceTxHash ? sepTx(transfer.sourceTxHash) : '-'}, proven onto Creditcoin ${ccTx(transfer.ccTxHash)}.`
+      );
+      w();
+    }
+    if (frozen) {
+      w(
+        `**${step++}. The credit line froze itself.** Reason recorded on chain: \`${FREEZE_REASONS[Number(frozen.args.reason)]}\`.`
+      );
+      w();
+      w(`${ccTx(frozen.hash)}`);
+      w();
+      para(
+        'No human was involved in the previous step or this one. The watcher ' +
+          'noticed the sale, proved it, and froze the line on its own.'
+      );
+    }
+
+    const repaid = credit.find((e) => e.name === 'RepaidLine');
+    const closed = credit.find((e) => e.name === 'LineClosed');
+    if (repaid) {
+      w(
+        `**${step++}. It repaid.** ${ctc(repaid.args.principal)} of principal plus ${ctc(repaid.args.interest)} of interest.`
+      );
+      w();
+      w(
+        `${ccTx(repaid.hash)}${closed ? `, and ${ctc(closed.args.collateralReturned)} of collateral came back at close.` : '.'}`
+      );
+      w();
+    }
+
+    if (rejudged) writeVerdict();
+
+    /**
+     * An agent that only ever rated others still matters: a rating from a party
+     * holding its own proven identity is worth more than one from a bare
+     * address, and that is most of why anyone here was approved at all.
+     */
+    if (!v && !offer && registered) {
+      const ownerPrefix = String(registered.detail).split('`')[1]?.slice(0, 10);
+      const left = proofs.filter(
+        (x) => x.eventName === 'NewFeedback' && x.detail.includes(ownerPrefix ?? '\u0000')
+      );
+      if (left.length) {
+        w(
+          `**2. It rated other agents ${left.length} time${left.length === 1 ? '' : 's'}.** ` +
+            `Agents ${[...new Set(left.map((x) => x.agentId))].join(' and ')}.`
+        );
+        w();
+        para(
+          'This is why it appears at all. Feedback is permissionless, so a rating ' +
+            'is only worth as much as whoever left it: one from a party holding ' +
+            'its own registered identity carries weight that one from a bare ' +
+            'address does not.'
+        );
+      }
+    }
+
+    if (line && Number(line.state) !== 0) {
+      w(
+        `**Where it stands now:** ${STATES[Number(line.state)]}, ${ctc(line.principalOutstanding)} outstanding of a ${ctc(line.limit)} limit.`
+      );
+      w();
+    }
+  }
+
+  const stale = lines.filter(({ id, line }) => {
+    const v = verdictFor(id);
+    return Number(line.state) !== 0 && v && !v.approve;
+  });
+  if (stale.length) {
+    w('### Why two agents show both a line and a refusal');
+    w();
+    para(
+      `Agents ${stale.map(({ id }) => id).join(' and ')} hold a credit line on chain and a ` +
+        'refusal from the underwriter. Both are true, and the pair is the point ' +
+        'rather than a contradiction.'
+    );
+    para(
+      'Evidence changes. An agent is re-judged whenever new facts arrive, so a ' +
+        'line records what was true when it was offered, and a verdict records ' +
+        'what is true now. One of these two sold its identity; the other ran out ' +
+        'of fresh evidence. Neither would be approved again today.'
+    );
+  }
+
+  w('## The lending pool');
+  w();
+  para(
+    `Lenders put real money in and the agents borrowed it. The pool currently holds ` +
+      `${ctc(totalAssets)} against ${ethers.formatEther(totalShares)} shares, with ${ctc(totalDeployed)} out on loan. ` +
+      `It is worth more than was deposited because a borrower repaid with interest.`
+  );
+  w('| What happened | Detail | Transaction |');
+  w('| --- | --- | --- |');
+  for (const e of poolEvents) {
+    let label = e.name as string;
+    let detail = '';
+    if (e.name === 'Deposited') {
+      label = 'A lender deposited';
+      detail = `${ctc(e.args.amount)} from \`${String(e.args.lender).slice(0, 10)}…\``;
+    } else if (e.name === 'Withdrawn') {
+      label = 'A lender withdrew';
+      detail = `${ctc(e.args.amount)} to \`${String(e.args.lender).slice(0, 10)}…\``;
+    } else if (e.name === 'Lent') {
+      label = 'Lent to an agent';
+      detail = `${ctc(e.args.amount)} to \`${String(e.args.to).slice(0, 10)}…\``;
+    } else if (e.name === 'Repaid') {
+      label = 'An agent repaid';
+      detail = `${ctc(e.args.principal)} principal, ${ctc(e.args.interest)} interest`;
+    } else if (e.name === 'LossRecorded') {
+      label = 'A loss was written off';
+      detail = ctc(e.args.principal);
+    } else if (e.name === 'CreditLineSet') {
+      label = 'Pool wired to the credit contract';
+      detail = `\`${e.args.creditLine}\``;
+    }
+    w(`| ${label} | ${detail} | ${ccTx(e.hash)} |`);
+  }
   w();
 
-  w('## What this demonstrates');
+  w('## Appendix');
   w();
-  w('### 1. Real ERC-8004 events, proven across chains with no trusted oracle');
+
+  w('### What the underwriter wrote, in full');
   w();
-  w(`${proofs.length} events read from Ethereum Sepolia and verified on Creditcoin by the`);
-  w('BlockProver precompile. Each row links the original Ethereum transaction and');
-  w('the Creditcoin transaction that proved it.');
+  para(
+    'Each of these was hashed and bound into its decision on chain. The site ' +
+      'recomputes the hash in your browser, so the text you read is provably the ' +
+      'text the contract was given.'
+  );
+  for (const v of verdicts) {
+    w(`**Agent ${v.agentId}, ${v.approve ? 'approved' : 'refused'}** (\`${v.reasoningHash}\`)`);
+    w();
+    for (const line of wrap(String(v.reasoning).trim(), 74)) w(`> ${line}`);
+    w();
+  }
+
+  w('### Every proven fact');
   w();
-  w('The last column is measured from the two block timestamps, not asserted. It');
-  w('is the gap between the event happening on Ethereum and its proof landing on');
-  w('Creditcoin, so it is a ceiling on the attestation window rather than the');
-  w('window itself. Rows proven as soon as they could be sit at 8 to 9 minutes,');
-  w('which is that window. Anything much larger is simply an event that was proven');
-  w('later: once a block is attested it proves immediately, however old it is.');
-  w();
+  para(
+    `All ${proofs.length} of them, newest last. The final column is measured from the two ` +
+      'block timestamps rather than asserted: it is the gap between an event ' +
+      'happening on Ethereum and its proof landing on Creditcoin. Rows proven as ' +
+      'soon as they could be sit at 8 to 9 minutes, which is the attestation ' +
+      'window. Anything much larger is just an event that was proven later, since ' +
+      'an already-attested block proves immediately however old it is.'
+  );
   w('| Event | Agent | Detail | On Ethereum | Proven on Creditcoin | Event to proof |');
   w('| --- | --- | --- | --- | --- | --- |');
   for (const p of proofs) {
@@ -259,71 +628,7 @@ async function main(): Promise<void> {
   }
   w();
 
-  w('### 2. Judgments formed from the proven facts, and defended in writing');
-  w();
-  w('The underwriter reads the proven facts above and nothing else. Its reasoning');
-  w('is hashed and bound into the offer on chain, so the text cannot be changed');
-  w('after the fact. `source` says which layer decided: `envelope` is a');
-  w('deterministic rule applied before any model is called, `judgment` is the');
-  w('underwriter forming a view.');
-  w();
-  w('| Agent | Decision | Decided by | Terms | Reasoning hash |');
-  w('| --- | --- | --- | --- | --- |');
-  for (const v of verdicts) {
-    const terms = v.approve
-      ? `${v.credit_limit} tCTC at ${v.rate_bps} bps, ${Math.round(v.collateral_ratio * 100)}% collateral`
-      : 'none';
-    w(
-      `| ${v.agentId} | ${v.approve ? 'Approved' : 'Refused'} | \`${v.source}\` | ${terms} | \`${v.reasoningHash.slice(0, 12)}…\` |`
-    );
-  }
-  w();
-  const refusedOnJudgment = verdicts.find((v) => !v.approve && v.source === 'judgment');
-  if (refusedOnJudgment) {
-    w(`Agent ${refusedOnJudgment.agentId} is the case worth reading. It has the best raw`);
-    w('numbers of any agent here and it was declined, which is the behaviour a');
-    w('scoring formula cannot produce:');
-    w();
-    for (const line of wrap(String(refusedOnJudgment.reasoning).trim(), 74)) {
-      w(`> ${line}`);
-    }
-    w();
-  }
-
-  w('### 3. Credit extended on that evidence, and frozen when it stopped holding');
-  w();
-  w('| Agent | State | Limit | Drawn | Outstanding | Freeze reason |');
-  w('| --- | --- | --- | --- | --- | --- |');
-  for (const { id, line } of lines) {
-    if (Number(line.state) === 0) continue;
-    w(
-      `| ${id} | ${STATES[Number(line.state)]} | ${ctc(line.limit)} | ${ctc(line.totalDrawn)} | ${ctc(line.principalOutstanding)} | ${FREEZE_REASONS[Number(line.freezeReason)]} |`
-    );
-  }
-  w();
-  /**
-   * A line on chain can predate the agent's current verdict, and saying so is
-   * better than letting a reader find the contradiction themselves.
-   */
-  const contradictions = lines.filter(({ id, line }) => {
-    const v = verdicts.find((x) => x.agentId === id);
-    return Number(line.state) !== 0 && v && !v.approve;
-  });
-  if (contradictions.length) {
-    const which = contradictions.map(({ id }) => id).join(' and ');
-    for (const line of wrap(
-      `Agents ${which} hold a line on chain and a refusal in the table above. ` +
-        'Both are real, and the pair is the point rather than an inconsistency: ' +
-        'evidence changes, so an agent is re-underwritten whenever new facts ' +
-        'arrive. A line records what was true when it was offered. A verdict ' +
-        'records what is true now.',
-      74
-    )) {
-      w(line);
-    }
-    w();
-  }
-  w('The lifecycle transactions behind those states:');
+  w('### Every credit line transaction');
   w();
   w('| Event | Agent | Detail | Transaction |');
   w('| --- | --- | --- | --- |');
@@ -343,56 +648,32 @@ async function main(): Promise<void> {
   }
   w();
 
-  const frozen = creditEvents.filter((e) => e.name === 'LineFrozen');
-  if (frozen.length) {
-    w('#### The freeze, end to end');
-    w();
-    w('This is the T8 attack: build a record, borrow against it, then sell the');
-    w('identity to someone with no history. Read the four transactions in order.');
-    w();
-    for (const f of frozen) {
-      const id = Number(f.args.agentId);
-      const offer = creditEvents.find((e) => e.name === 'LineOffered' && Number(e.args.agentId) === id);
-      const transfer = proofs.find((p) => p.eventName === 'Transfer' && p.agentId === id);
-      w(`Agent ${id}:`);
-      w();
-      if (offer) w(`1. Line offered on proven evidence: ${ccTx(offer.hash)}`);
-      if (transfer?.sourceTxHash)
-        w(`2. Identity sold on Ethereum: ${sepTx(transfer.sourceTxHash)}`);
-      if (transfer) w(`3. Transfer proven onto Creditcoin: ${ccTx(transfer.ccTxHash)}`);
-      w(`4. Line frozen, \`${FREEZE_REASONS[Number(f.args.reason)]}\`: ${ccTx(f.hash)}`);
-      w();
-      w('Steps 3 and 4 were made by the watcher with no human involved.');
-      w();
-    }
-  }
-
-  w('### 4. A funded pool, with real lender capital');
+  w('### Contracts');
   w();
-  w(`Assets ${ctc(totalAssets)}, shares ${ethers.formatEther(totalShares)}, deployed ${ctc(totalDeployed)}.`);
-  w();
-  w('| Event | Detail | Transaction |');
+  w('| What | Chain | Address |');
   w('| --- | --- | --- |');
-  for (const e of poolEvents) {
-    let detail = '';
-    if (e.name === 'Deposited') detail = `${ctc(e.args.amount)} from \`${String(e.args.lender).slice(0, 10)}…\``;
-    else if (e.name === 'Withdrawn') detail = `${ctc(e.args.amount)} to \`${String(e.args.lender).slice(0, 10)}…\``;
-    else if (e.name === 'Lent') detail = `${ctc(e.args.amount)} to \`${String(e.args.to).slice(0, 10)}…\``;
-    else if (e.name === 'Repaid')
-      detail = `principal ${ctc(e.args.principal)}, interest ${ctc(e.args.interest)}`;
-    else if (e.name === 'LossRecorded') detail = `written off ${ctc(e.args.principal)}`;
-    else if (e.name === 'CreditLineSet') detail = `\`${e.args.creditLine}\``;
-    w(`| \`${e.name}\` | ${detail} | ${ccTx(e.hash)} |`);
-  }
+  w(`| AssayOracle | Creditcoin | ${ccAddr(DEPLOYMENTS.assayOracle)} |`);
+  w(`| CreditLine | Creditcoin | ${ccAddr(DEPLOYMENTS.creditLine)} |`);
+  w(`| LendingPool | Creditcoin | ${ccAddr(DEPLOYMENTS.lendingPool)} |`);
+  w(`| ERC-8004 Identity | Sepolia | ${sepAddr(REGISTRIES.identity)} |`);
+  w(`| ERC-8004 Reputation | Sepolia | ${sepAddr(REGISTRIES.reputation)} |`);
   w();
+  para(
+    'The two Sepolia registries are the trust anchor of the whole system. Assay ' +
+      'did not deploy them and cannot write to them, and they are the only two ' +
+      'addresses whose events the oracle will accept.'
+  );
 
-  w('## Reading this yourself');
+  w('### Checking any of this yourself');
   w();
-  w('Nothing here requires trusting this file. Open any Creditcoin transaction');
-  w('above, read the `execute` call it made, and the block height and Merkle proof');
-  w('it carries are the ones the precompile verified. The Ethereum link in the same');
-  w('row is the transaction that proof was built from.');
-  w();
+  para(
+    'Nothing here requires trusting this file. Open any Creditcoin transaction ' +
+      'above and read the `execute` call it made: the block height and Merkle ' +
+      'proof it carries are the ones the precompile verified. The Ethereum link ' +
+      'in the same row is the transaction that proof was built from. If the two ' +
+      'ever disagreed, the proof would not have been accepted.'
+  );
+
 
   writeFileSync('EVIDENCE.md', out.join('\n'));
   console.log(`\nEVIDENCE.md written: ${proofs.length} proofs, ${creditEvents.length} credit events, ${poolEvents.length} pool events.`);
