@@ -46,6 +46,12 @@ export const LENDING_POOL_ABI = [
   'function balanceOf(address) view returns (uint256)',
   'function deposit() payable',
   'function withdraw(uint256 shareAmount)',
+  'event Deposited(address indexed lender, uint256 amount, uint256 sharesMinted)',
+  'event Withdrawn(address indexed lender, uint256 amount, uint256 sharesBurned)',
+  'event Lent(address indexed to, uint256 amount)',
+  'event Repaid(uint256 principal, uint256 interest)',
+  'event LossRecorded(uint256 principal)',
+  'event CreditLineSet(address indexed creditLine)',
 ] as const;
 
 export const CREDIT_LINE_ABI = [
@@ -57,4 +63,12 @@ export const CREDIT_LINE_ABI = [
   'function draw(uint256 agentId, uint256 amount)',
   'function repay(uint256 agentId) payable',
   'function freezeIfTriggered(uint256 agentId) returns (bool)',
+  'event UnderwriterSet(address indexed underwriter)',
+  'event LineOffered(uint256 indexed agentId, address indexed borrower, uint256 limit, uint256 collateralRequired, uint16 interestBps, uint64 expiryBlock, bytes32 reasoningHash)',
+  'event LineAccepted(uint256 indexed agentId, address indexed borrower, uint256 collateralPosted)',
+  'event Drawn(uint256 indexed agentId, uint256 amount, uint256 principalOutstanding)',
+  'event RepaidLine(uint256 indexed agentId, uint256 principal, uint256 interest, uint256 principalOutstanding)',
+  'event LineClosed(uint256 indexed agentId, uint256 collateralReturned)',
+  'event LineFrozen(uint256 indexed agentId, uint8 reason)',
+  'event LineDefaulted(uint256 indexed agentId, uint256 recovered, uint256 writtenOff)',
 ] as const;
