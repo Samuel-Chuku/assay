@@ -66,28 +66,20 @@
   },
   {
     "agentId": 10195,
-    "approve": true,
-    "credit_limit": "2.0",
-    "collateral_ratio": 0.6,
-    "rate_bps": 1800,
-    "confidence": 0.35,
-    "reasoning": "Agent 10195 shows a small but genuinely diversified record: 3 feedback entries, each from a distinct counterparty (0x4B11611CF7C90aEc2003721d71107d7E1cBf37c2, 0xa0f67760468D678b5C2138bf0D0319aa569644eE, 0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf), and all three raters hold their own proven ERC-8004 identities rather than being disposable addresses with nothing staked. That is the pattern this framework treats as meaningful signal rather than noise: no single payer dominates (33% max share each), and none of the entries come from unbacked accounts. The mean value of 0.91 is high but not suspiciously perfect, and it is corroborated by three independent, identity-holding parties rather than one relationship dressed up as a track record. That materially outweighs a superficially similar-looking but fabricated-looking record of many entries from one uncredentialed payer. However, the record is extremely thin in absolute terms: only 3 entries total, each counterparty appears exactly once (index 1), so there is no repeat-business signal and no way to assess regularity over time. The identity itself is brand new -- proven for 0.0 days, with the newest evidence also 0.0 days old -- meaning this entire history was likely established and attested in a single short window rather than accumulated over a meaningful operating period. That timing raises the same 'single burst' concern the framework warns about, even though the counterparties are independently credentialed; it is consistent with a legitimate agent just onboarding, but it is also consistent with a freshly assembled identity paying a few real counterparties for one-off jobs to seed a good-looking profile before seeking credit. No payment wallet is set, which adds uncertainty about how draws would actually be settled and reduces confidence further. Given genuine breadth and real counterparty standing, outright refusal is not warranted -- but the extreme youth, small n, and single-instance-per-counterparty pattern mean this cannot be sized or priced as an established borrower. I am extending a small line, sized well below what a request based on a 0.91 mean might imply, with high collateral and an elevated rate to price the uncertainty around durability and settlement. What would change my mind: a longer observation window showing repeat engagement from any of these three counterparties, additional distinct identity-holding counterparties, evidence spread over time rather than concentrated at proof, and a stable payment wallet with a transaction history of its own.",
+    "approve": false,
+    "credit_limit": "0",
+    "collateral_ratio": 0,
+    "rate_bps": 0,
+    "confidence": 1,
+    "reasoning": "Refused before underwriting, on a deterministic rule rather than a judgment. The identity has changed hands 1 time(s) since it was first proven. The record describes work done by a previous holder, so it says nothing about the current one. This is not an assessment of the agent's quality: the evidence itself is unusable, so no assessment is possible.",
     "evidence_used": [
-      "3 feedback entries from 3 distinct counterparties, none exceeding 33% share",
-      "All 3 counterparties (0x4B11611CF7C90aEc2003721d71107d7E1cBf37c2, 0xa0f67760468D678b5C2138bf0D0319aa569644eE, 0x348e0864f4D647449397e9bc2EEa6a4b582C1cBf) hold proven ERC-8004 identities",
-      "0% of entries come from counterparties with no proven identity",
-      "Mean feedback value 0.91, range 0.90-0.93, not a suspicious perfect score",
-      "Identity proven for 0.0 days and newest evidence 0.0 days old, indicating the whole record was established essentially simultaneously",
-      "Each counterparty appears only once (index 1), so no repeat-business or longitudinal signal",
-      "No payment wallet set",
-      "0 identity transfers, 0 payment wallet changes"
+      "agent 10195 on oracle 0x76131b6547b584e9f101618239A26B2aCCd8aA43",
+      "rule: identity-transferred"
     ],
-    "decidedAt": "2026-09-09T23:18:15.581Z",
-    "model": "anthropic/claude-sonnet-5",
-    "reasoningHash": "0xc4c7c6a244e27e8f8cd30a8638a8d0d34a8e4f459bb3b9a2000edb5f30ab3d87",
-    "source": "judgment",
-    "adjustments": [
-      "credit limit reduced from 150 to the 2.0 tCTC policy ceiling"
-    ]
+    "decidedAt": "2026-09-09T23:42:13.628Z",
+    "model": "deterministic-envelope",
+    "reasoningHash": "0xd911ca0885c68eb4f9fa65edf31d730ac7dda7d006a95bf9f9203c91d9dfdcbe",
+    "source": "envelope",
+    "adjustments": []
   }
 ]

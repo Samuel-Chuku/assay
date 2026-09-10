@@ -1078,3 +1078,44 @@ a.as-button {
     padding: var(--as-3);
   }
 }
+
+/* ============================================================
+   Long-form explanation
+   ============================================================ */
+
+/* Narrower than the app pages: the container is sized to the reading measure
+   rather than the measure being floated inside a wide window. */
+.as-prose-page {
+  max-width: 700px;
+}
+
+.as-prose-page .as-hero-body,
+.as-prose-page .as-steps-list li {
+  max-width: 68ch;
+}
+
+.as-steps-list {
+  margin: 0;
+  padding-left: var(--as-5);
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-steps-list li {
+  margin-bottom: var(--as-2);
+  max-width: 62ch;
+}
+
+.as-steps-list strong {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+}
+
+.as-evidence-single {
+  max-height: none;
+  overflow: visible;
+}
+
+.as-prose-page a {
+  color: var(--as-ink);
+}

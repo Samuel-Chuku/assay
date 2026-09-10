@@ -38,7 +38,7 @@ const DEFAULT_ITEMS: MenuItem[] = [
   { label: 'Agents', href: '/app' },
   { label: 'Evidence', href: '/#evidence' },
   { label: 'Pool', href: '/app#pool' },
-  { label: 'About', href: '/#about' },
+  { label: 'How it works', href: '/how-it-works' },
 ];
 
 type MenuBarProps = {
