@@ -80,7 +80,100 @@ export type Pool = {
   utilisation: number;
 };
 
-const verdicts = verdictsJson as Verdict[];
+/**
+ * Verdicts, live where possible and committed otherwise.
+ *
+ * Judgments are formed by the watcher, which runs on its own machine, while
+ * this site is built from git. Without a live read, the site would show
+ * whatever verdict was committed at deploy time forever, and re-underwriting
+ * would happen where nobody could see it.
+ *
+ * The committed file stays the floor. A live fetch only ever replaces it
+ * wholesale and only when it parses, so an unreachable or broken watcher
+ * degrades to the last known-good verdicts rather than to nothing. That is the
+ * fail-closed rule applied to a second source: never fall back to *less*
+ * verified data than we already had.
+ *
+ * Trusting a URL is safe here for one specific reason. Each verdict carries a
+ * `reasoningHash` that was bound into its on-chain offer, and `getAgent` below
+ * recomputes keccak256 over the reasoning it received. Substituted text fails
+ * that check and the UI shows it failing, so the worst a hostile response can
+ * do is make a verdict visibly unverified.
+ */
+const committed = verdictsJson as Verdict[];
+
+const VERDICTS_URL = process.env.VERDICTS_URL;
+
+/** Long enough for a slow hop, short enough not to hold a render open. */
+const VERDICTS_TIMEOUT_MS = 4_000;
+
+function usable(payload: unknown): payload is Verdict[] {
+  return (
+    Array.isArray(payload) &&
+    payload.length > 0 &&
+    payload.every(
+      (v) =>
+        typeof v === 'object' &&
+        v !== null &&
+        typeof (v as Verdict).agentId === 'number' &&
+        typeof (v as Verdict).reasoning === 'string' &&
+        typeof (v as Verdict).reasoningHash === 'string'
+    )
+  );
+}
+
+/**
+ * One fetch per window, however many agents are being rendered.
+ *
+ * `getAgents` resolves each agent separately, so without this a five-agent page
+ * would make five identical requests, and concurrent ones would all miss a
+ * plain time check together.
+ */
+let cached: { at: number; verdicts: Verdict[] } | null = null;
+let inFlight: Promise<Verdict[]> | null = null;
+
+async function loadVerdicts(): Promise<Verdict[]> {
+  if (!VERDICTS_URL) return committed;
+
+  if (cached && Date.now() - cached.at < VERDICTS_TIMEOUT_MS * 2) {
+    return cached.verdicts;
+  }
+  if (!inFlight) {
+    inFlight = fetchVerdicts()
+      .then((verdicts) => {
+        cached = { at: Date.now(), verdicts };
+        return verdicts;
+      })
+      .finally(() => {
+        inFlight = null;
+      });
+  }
+  return inFlight;
+}
+
+async function fetchVerdicts(url = VERDICTS_URL): Promise<Verdict[]> {
+  if (!url) return committed;
+
+  try {
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(VERDICTS_TIMEOUT_MS),
+      /*
+       * Not `no-store`. That opts the whole route out of static rendering, so
+       * every visitor would re-read both chains instead of one render per
+       * minute serving everybody. Revalidating on its own window keeps the page
+       * prerendered and still picks up a new verdict within the minute.
+       */
+      next: { revalidate: 30 },
+    });
+    if (!res.ok) return committed;
+
+    const payload: unknown = await res.json();
+    return usable(payload) ? (payload as Verdict[]) : committed;
+  } catch {
+    // Unreachable watcher is a normal state, not an error worth failing on.
+    return committed;
+  }
+}
 
 function toEther(value: bigint): string {
   return ethers.formatEther(value);
@@ -135,7 +228,7 @@ export async function getAgent(agentId: number): Promise<Agent | null> {
   );
   if (!record.proven) return null;
 
-  const verdict = verdicts.find((v) => v.agentId === agentId) ?? null;
+  const verdict = (await loadVerdicts()).find((v) => v.agentId === agentId) ?? null;
 
   let line: CreditLine | null = null;
   try {

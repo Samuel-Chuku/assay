@@ -29,4 +29,16 @@ export const WATCHER = {
 
   /** Longest pause after repeated failures. */
   maxBackoffSeconds: 900,
+
+  /**
+   * Port for the read-only status server.
+   *
+   * The site is deployed separately and builds from git, so a verdict formed
+   * here would otherwise never reach it: re-underwriting would keep happening
+   * and nobody would see it. Serving the verdicts the watcher actually holds
+   * closes that gap without putting a deploy in the loop of a credit decision.
+   *
+   * Bound to loopback. A reverse proxy is what faces the world.
+   */
+  statusPort: 8787,
 } as const;

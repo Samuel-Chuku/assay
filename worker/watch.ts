@@ -33,6 +33,7 @@ import { REGISTRIES, SEPOLIA } from '../config/chains';
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '../config/deployments';
 import { IDENTITY_EVENTS, REPUTATION_EVENTS } from '../config/events';
 import { WATCHER } from '../config/watcher';
+import { serveStatus } from './serve';
 import { underwrite } from '../underwriter/underwrite';
 import { prove, type ActionName } from './prove';
 
@@ -323,10 +324,30 @@ async function main(): Promise<void> {
   log(`watching ${REGISTRIES.identity.slice(0, 10)}… and ${REGISTRIES.reputation.slice(0, 10)}… on Sepolia`);
   log(`ceiling ${WATCHER.maxProofsPerDay} proofs/day, polling every ${WATCHER.pollSeconds}s`);
 
+  const startedAt = new Date().toISOString();
+  let lastTickAt: string | null = null;
   let failures = 0;
+
+  // A one-shot run has nothing to serve and no time to serve it.
+  if (!once) {
+    serveStatus(() => {
+      const state = loadState();
+      return {
+        startedAt,
+        lastTickAt,
+        lastScannedBlock: state.lastScannedBlock,
+        pending: state.pending.length,
+        proofsToday: state.spend[today()] ?? 0,
+        proofCeiling: WATCHER.maxProofsPerDay,
+        consecutiveFailures: failures,
+      };
+    });
+  }
+
   for (;;) {
     try {
       await pass(sep, cc);
+      lastTickAt = new Date().toISOString();
       failures = 0;
     } catch (error) {
       failures++;
