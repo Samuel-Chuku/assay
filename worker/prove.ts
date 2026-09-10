@@ -16,14 +16,12 @@
  */
 import 'dotenv/config';
 
-import { readFileSync } from 'node:fs';
 import { ethers } from 'ethers';
 import { proofProvider, chainInfo } from '@gluwa/usc-sdk';
 
+import { ASSAY_ORACLE_ABI } from '../config/abi';
 import { CREDITCOIN, SEPOLIA, GAS_LIMIT_MULTIPLIER } from '../config/chains';
 import { DEPLOYMENTS } from '../config/deployments';
-
-const ARTIFACT = 'contracts/out/AssayOracle.sol/AssayOracle.json';
 
 /**
  * Matches AssayOracle.Action, all four of them. The transfer and wallet cases
@@ -78,8 +76,13 @@ export async function prove(txHash: string, actionName: ActionName): Promise<str
   const proof = result.data;
   console.log(`Proof ready. txIndex ${proof.txIndex}, continuity roots ${proof.continuityProof.roots.length}, cached ${proof.cached}`);
 
-  const artifact = JSON.parse(readFileSync(ARTIFACT, 'utf8'));
-  const oracle = new ethers.Contract(DEPLOYMENTS.assayOracle, artifact.abi, wallet);
+  /*
+   * The declared interface, not the forge artifact. `contracts/out` is build
+   * output and is not committed, so reading it made the prover work only on a
+   * machine that had compiled the contracts. The watcher runs from a fresh
+   * clone, where the artifact never exists and every proof deferred forever.
+   */
+  const oracle = new ethers.Contract(DEPLOYMENTS.assayOracle, ASSAY_ORACLE_ABI, wallet);
 
   const args = [
     ACTIONS[actionName],
