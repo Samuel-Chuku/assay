@@ -795,9 +795,14 @@ a.as-button {
 
   /* Detail: the reasoning is tall, so it takes the left column and the
      shorter identity and line windows stack beside it. */
+  /*
+   * Two windows side by side, then one across the full width. The left window
+   * used to span three rows against a right column holding two, which left the
+   * bottom-left quadrant empty on every viewport.
+   */
   .as-w-verdict {
     grid-column: 1;
-    grid-row: 1 / span 3;
+    grid-row: 1;
   }
 
   .as-w-identity {
@@ -806,7 +811,7 @@ a.as-button {
   }
 
   .as-w-lineinfo {
-    grid-column: 2;
+    grid-column: 1 / -1;
     grid-row: 2;
   }
 

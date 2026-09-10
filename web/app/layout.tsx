@@ -29,6 +29,7 @@ export const metadata: Metadata = {
   title: 'Assay',
   description:
     'Credit for autonomous agents, underwritten on proof. Assay reads an agent’s work history from Ethereum, proves it on Creditcoin without a trusted oracle, and extends a credit line against it.',
+  icons: { icon: '/icon.svg' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
