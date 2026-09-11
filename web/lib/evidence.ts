@@ -6,6 +6,7 @@ import { ASSAY_ORACLE_ABI, BLOCK_PROVER_ABI } from '@assay/config/abi';
 import { CREDITCOIN, REGISTRIES } from '@assay/config/chains';
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '@assay/config/deployments';
 import { creditcoin, retry, sepolia } from './chain';
+import { fullHistoryLogs } from './logs';
 
 /**
  * Reads proven facts off Creditcoin and reconstructs each one's link back to
@@ -142,12 +143,7 @@ async function oracleLogs(cc: ethers.JsonRpcProvider, topics: string[]): Promise
 
   if (!logsInFlight) {
     logsInFlight = retry('reading proven facts from Creditcoin', 3, () =>
-      cc.getLogs({
-        address: DEPLOYMENTS.assayOracle,
-        fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
-        toBlock: 'latest',
-        topics: [topics],
-      })
+      fullHistoryLogs(cc, { address: DEPLOYMENTS.assayOracle, topics: [topics] })
     )
       .then((logs) => {
         logsCache = { at: Date.now(), logs };

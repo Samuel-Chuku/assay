@@ -39,8 +39,18 @@ export type ActionName = keyof typeof ACTIONS;
 const EXECUTE_SIGNATURE =
   'execute(uint8,uint64,uint64,bytes,bytes32,tuple(bytes32,bool)[],bytes32,bytes32[])';
 
-export async function prove(txHash: string, actionName: ActionName): Promise<string> {
-  const key = process.env.DEPLOYER_PRIVATE_KEY;
+/**
+ * @param signerKey Who pays for the proof. Defaults to our operator key, because
+ *   that is who the watcher is. An agent proving its own history passes its own
+ *   key instead: `execute` has no access control, so nothing about this path is
+ *   reserved for us.
+ */
+export async function prove(
+  txHash: string,
+  actionName: ActionName,
+  signerKey?: string
+): Promise<string> {
+  const key = signerKey ?? process.env.DEPLOYER_PRIVATE_KEY;
   if (!key?.trim()) throw new Error('DEPLOYER_PRIVATE_KEY not set');
 
   const sepolia = new ethers.JsonRpcProvider(SEPOLIA.rpcUrl);

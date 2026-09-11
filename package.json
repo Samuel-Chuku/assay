@@ -21,7 +21,8 @@
     "identity:sell": "tsx scripts/sell-identity.ts",
     "evidence:export": "tsx scripts/export-evidence.ts",
     "borrow": "tsx worker/borrow.ts",
-    "rate": "tsx scripts/rate-agent.ts"
+    "rate": "tsx scripts/rate-agent.ts",
+    "apply": "tsx scripts/apply.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",

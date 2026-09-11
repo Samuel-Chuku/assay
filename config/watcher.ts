@@ -22,6 +22,14 @@ export const WATCHER = {
   scanWindowBlocks: 2_000,
 
   /**
+   * Blocks per Creditcoin scan. The oracle's own history is read to learn which
+   * agents exist, and Creditcoin abandons any `eth_getLogs` over ten seconds.
+   * Measured 9.62s across 20,166 blocks, so the whole-history query was days
+   * from failing permanently.
+   */
+  creditcoinScanWindowBlocks: 5_000,
+
+  /**
    * Proofs per UTC day. Each costs roughly 230k gas on Creditcoin, so this is
    * the ceiling on what an unattended wallet can spend before someone looks.
    */

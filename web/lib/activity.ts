@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { CREDIT_LINE_ABI } from '@assay/config/abi';
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '@assay/config/deployments';
 import { creditcoin, retry } from './chain';
+import { fullHistoryLogs } from './logs';
 
 /**
  * What an agent has actually done with its credit line.
@@ -51,11 +52,7 @@ async function creditLogs(cc: ethers.JsonRpcProvider): Promise<ethers.Log[]> {
 
   if (!inFlight) {
     inFlight = retry('reading credit line activity', 3, () =>
-      cc.getLogs({
-        address: DEPLOYMENTS.creditLine,
-        fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
-        toBlock: 'latest',
-      })
+      fullHistoryLogs(cc, { address: DEPLOYMENTS.creditLine })
     )
       .then((logs) => {
         cache = { at: Date.now(), logs };

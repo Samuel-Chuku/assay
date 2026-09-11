@@ -2092,3 +2092,21 @@ a.as-button {
   color: var(--as-ink);
   font-weight: 700;
 }
+
+/* A command to copy. Scrolls rather than wrapping: a broken command line is
+   worse than one the reader has to drag. */
+.as-code {
+  margin: 0 0 var(--as-4);
+  padding: var(--as-3) var(--as-4);
+  background: var(--as-sunk);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-radius: var(--as-r-control);
+  overflow-x: auto;
+  font-family: var(--as-data);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+.as-code code {
+  white-space: pre;
+}

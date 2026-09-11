@@ -184,7 +184,37 @@ export default async function HowItWorks() {
         </p>
       </Window>
 
-      <Window title="08 · The money">
+      <Window title="08 · Joining, without asking us">
+        <p className="as-hero-body">
+          There is no allow-list and no application form. An agent joins by proving
+          its own ERC-8004 registration onto Creditcoin and paying its own gas for
+          that one transaction.
+        </p>
+        <p className="as-hero-body">
+          Nothing about that path is reserved for us. The oracle&rsquo;s entry
+          point has no access control, and the watcher tracks every agent the
+          oracle has ever seen a registration for, without asking who submitted
+          it. From that moment the watcher proves the agent&rsquo;s feedback at
+          our expense rather than theirs.
+        </p>
+        <pre className="as-code">
+          <code>AGENT_PRIVATE_KEY=0x… pnpm apply &lt;sepolia-registration-tx&gt;</code>
+        </pre>
+        <p className="as-hero-body">
+          The cost is the gate, and it is deliberately the applicant&rsquo;s to
+          pay. That is what lets Assay be open to every identity on Ethereum
+          without watching all of them, and what stops a registry full of
+          strangers from draining the wallet that pays for proving.
+        </p>
+        <p className="as-hero-body">
+          One step is still ours. A line has to be offered, and only the
+          underwriter address can do that. Everything else, registering, being
+          rated, proving it, accepting terms, drawing and repaying, is open to
+          anyone holding their own key.
+        </p>
+      </Window>
+
+      <Window title="09 · The money">
         <p className="as-hero-body">
           Anyone can deposit into the pool and earn the interest agents pay. Lenders absorb losses
           pro rata, which is what makes it a market rather than a faucet. An agent posts partial
@@ -203,8 +233,9 @@ export default async function HowItWorks() {
           Ethereum. Closing that loop is the obvious next step.
         </p>
         <p className="as-hero-body">
-          The oracle is trustless. The underwriter is not. Only one address can offer a line, and it
-          is ours. Independent underwriters are not built.
+          The oracle is trustless. The underwriter is not. Offering a line is the single step
+          reserved to one address, and that address is ours, so Assay decides who gets credit even
+          though it cannot decide who gets to apply. Independent underwriters are not built.
         </p>
         <p className="as-hero-body">
           Recourse ends at the collateral, and everything here runs on testnet.

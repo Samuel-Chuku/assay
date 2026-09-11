@@ -6,6 +6,7 @@ import { ASSAY_ORACLE_ABI, CREDIT_LINE_ABI, LENDING_POOL_ABI } from '@assay/conf
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '@assay/config/deployments';
 import verdictsJson from '@assay/config/verdicts.json';
 import { creditcoin, retry } from './chain';
+import { fullHistoryLogs } from './logs';
 
 /**
  * Agents, their verdicts, their credit lines, and the pool.
@@ -208,12 +209,7 @@ export async function getAgentIds(): Promise<number[]> {
   const topic = oracle.interface.getEvent('AgentProven')!.topicHash;
 
   const logs = await retry('listing proven agents', 3, () =>
-    cc.getLogs({
-      address: DEPLOYMENTS.assayOracle,
-      fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
-      toBlock: 'latest',
-      topics: [topic],
-    })
+    fullHistoryLogs(cc, { address: DEPLOYMENTS.assayOracle, topics: [topic] })
   );
 
   const ids = new Set<number>();

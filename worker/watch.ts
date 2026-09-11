@@ -56,11 +56,27 @@ type State = {
   proven: string[];
   /** Proof count per UTC day, against the ceiling. */
   spend: Record<string, number>;
+  /** Agents the oracle has proven, accumulated rather than rescanned. */
+  tracked: number[];
+  /** Last Creditcoin block scanned for new agents. */
+  trackedScannedTo: number;
 };
 
 function loadState(): State {
-  if (existsSync(STATE_PATH)) return JSON.parse(readFileSync(STATE_PATH, 'utf8')) as State;
-  return { lastScannedBlock: 0, pending: [], proven: [], spend: {} };
+  if (existsSync(STATE_PATH)) {
+    const saved = JSON.parse(readFileSync(STATE_PATH, 'utf8')) as Partial<State>;
+    // A state file written before incremental tracking has neither field, and
+    // must scan from the start rather than silently tracking nobody.
+    return {
+      lastScannedBlock: saved.lastScannedBlock ?? 0,
+      pending: saved.pending ?? [],
+      proven: saved.proven ?? [],
+      spend: saved.spend ?? {},
+      tracked: saved.tracked ?? [],
+      trackedScannedTo: saved.trackedScannedTo ?? 0,
+    };
+  }
+  return { lastScannedBlock: 0, pending: [], proven: [], spend: {}, tracked: [], trackedScannedTo: 0 };
 }
 
 function saveState(state: State): void {
@@ -76,24 +92,41 @@ const log = (message: string): void =>
   console.log(`${new Date().toISOString().slice(11, 19)}  ${message}`);
 
 /**
- * Which agents we act for: those whose identity the oracle has already proven.
- * Onboarding a new agent stays a deliberate act, not something a watcher does
- * on its own with someone else's gas.
+ * Which agents we act for: those whose identity the oracle has already proven,
+ * whoever paid to prove it. An agent joins by proving its own registration, so
+ * this set grows without us doing anything, which is the intended way in.
+ *
+ * Scanned incrementally and remembered on disk. It used to read the oracle's
+ * whole history every pass, which measured 9.62s against Creditcoin's ten
+ * second `eth_getLogs` limit on a window growing 5,760 blocks a day. That is
+ * not a query that occasionally fails; it is one that was days from failing
+ * permanently, and it had already started.
  */
-async function trackedAgents(cc: ethers.JsonRpcProvider): Promise<Set<number>> {
+async function trackedAgents(cc: ethers.JsonRpcProvider, state: State): Promise<Set<number>> {
   const oracle = new ethers.Contract(DEPLOYMENTS.assayOracle, ASSAY_ORACLE_ABI, cc);
-  const logs = await cc.getLogs({
-    address: DEPLOYMENTS.assayOracle,
-    fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
-    toBlock: 'latest',
-    topics: [oracle.interface.getEvent('AgentProven')!.topicHash],
-  });
+  const head = await cc.getBlockNumber();
+  const from = state.trackedScannedTo > 0 ? state.trackedScannedTo + 1 : ORACLE_DEPLOYED_AT_BLOCK;
 
-  const ids = new Set<number>();
-  for (const entry of logs) {
-    const parsed = oracle.interface.parseLog({ topics: [...entry.topics], data: entry.data });
-    if (parsed) ids.add(Number(parsed.args.agentId));
+  const ids = new Set<number>(state.tracked ?? []);
+
+  // One bounded window per pass, for the same reason the Sepolia scan is
+  // bounded. A cold start walks the history in chunks rather than one query.
+  for (let start = from; start <= head; start += WATCHER.creditcoinScanWindowBlocks) {
+    const end = Math.min(start + WATCHER.creditcoinScanWindowBlocks - 1, head);
+    const logs = await cc.getLogs({
+      address: DEPLOYMENTS.assayOracle,
+      fromBlock: start,
+      toBlock: end,
+      topics: [oracle.interface.getEvent('AgentProven')!.topicHash],
+    });
+    for (const entry of logs) {
+      const parsed = oracle.interface.parseLog({ topics: [...entry.topics], data: entry.data });
+      if (parsed) ids.add(Number(parsed.args.agentId));
+    }
   }
+
+  state.tracked = [...ids];
+  state.trackedScannedTo = head;
   return ids;
 }
 
@@ -297,7 +330,10 @@ async function reUnderwrite(agentIds: Set<number>): Promise<void> {
 
 async function pass(sep: ethers.JsonRpcProvider, cc: ethers.JsonRpcProvider): Promise<void> {
   const state = loadState();
-  const tracked = await trackedAgents(cc);
+  const tracked = await trackedAgents(cc, state);
+  // Persist the tracking cursor even if the Sepolia scan below fails, so a bad
+  // pass does not make the next one rescan the whole oracle history.
+  saveState(state);
 
   await scan(sep, state, tracked);
   const touched = await proveReady(state, cc);
