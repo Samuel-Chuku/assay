@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "shoot": "node scripts/shoot.mjs"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@assay/config": "workspace:*",
