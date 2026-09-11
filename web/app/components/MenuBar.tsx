@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import { ConnectButton } from './ConnectButton';
 import { MenuItems } from './MenuItems';
 import { ThemeToggle } from './ThemeToggle';
@@ -59,9 +61,29 @@ export function MenuBar({ name = 'ASSAY', items = DEFAULT_ITEMS, status = null }
   return (
     <nav className="as-menubar" aria-label="Main">
       <div className="as-menubar-items">
-        <span className="as-menubar-mark" aria-hidden="true">
-          ▤
-        </span>
+        {/*
+          The lockup, 24px tall: the smallest size the full mark is allowed at.
+          Two files rather than a recolour, because the blue bar is --as-proof
+          and means "proven"; only the ink and paper change between themes.
+        */}
+        <Link href="/" className="as-menubar-brand" aria-label="Assay, home">
+          <img
+            className="as-brand-light"
+            src="/logo.svg"
+            alt=""
+            width={84}
+            height={24}
+            decoding="async"
+          />
+          <img
+            className="as-brand-dark"
+            src="/logo-invert.svg"
+            alt=""
+            width={84}
+            height={24}
+            decoding="async"
+          />
+        </Link>
         <MenuItems items={items} />
       </div>
 

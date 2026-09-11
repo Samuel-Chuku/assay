@@ -103,8 +103,52 @@ body {
   min-width: 0;
 }
 
-.as-menubar-mark {
-  font-size: var(--as-size-title);
+/*
+ * The lockup in the bar. 24px is the floor the brand README sets for the full
+ * mark; below it the dots vanish and the third bar closes up. Two images, one
+ * per theme, because the mark must never be recoloured.
+ */
+.as-menubar-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-right: var(--as-2);
+  line-height: 0;
+}
+
+.as-menubar-brand img {
+  height: 24px;
+  width: auto;
+}
+
+/*
+ * One lockup per theme. These carry `img.` so they outrank the sizing rules
+ * above and below, which do not set display; without that, `display: block`
+ * from the container rule won and both lockups rendered side by side.
+ */
+img.as-brand-light {
+  display: block;
+}
+
+img.as-brand-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) img.as-brand-light {
+    display: none;
+  }
+  :root:not([data-theme='light']) img.as-brand-dark {
+    display: block;
+  }
+}
+
+:root[data-theme='dark'] img.as-brand-light {
+  display: none;
+}
+
+:root[data-theme='dark'] img.as-brand-dark {
+  display: block;
 }
 
 /*
@@ -856,22 +900,13 @@ a.as-button {
     column-gap: var(--as-6);
   }
 
-  /* Hero holds the left column; the meters tuck into its bottom-right. */
-  .as-w-hero {
+  /* First row under the hero: the problem beside the live meters. */
+  .as-w-problem {
     grid-column: 1;
   }
 
   .as-w-live {
     grid-column: 2;
-    margin-left: calc(var(--as-6) * -1);
-    margin-top: var(--as-7);
-    z-index: 2;
-  }
-
-  /* Offset right, as the reference sets the problem statement. */
-  .as-w-problem {
-    grid-column: 2;
-    margin-top: calc(var(--as-5) * -1);
   }
 
   .as-w-steps,
@@ -888,7 +923,7 @@ a.as-button {
   /* Sits beside the limits, which used to leave the right column empty for the
      whole height of that window. */
   .as-w-try {
-    grid-column: 1;
+    grid-column: 1 / -1;
   }
 
   .as-w-footer {
@@ -2164,4 +2199,144 @@ a.as-button {
   margin: var(--as-3) 0 0;
   padding-top: var(--as-3);
   border-top: 1px solid var(--as-sunk);
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+
+.as-footer {
+  max-width: 1300px;
+  margin: var(--as-7) auto 0;
+  padding: var(--as-6) var(--as-5) var(--as-6);
+  border-top: var(--as-bw-chrome) solid var(--as-ink);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+.as-footer-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: var(--as-6);
+}
+
+.as-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-3);
+}
+
+.as-footer-lockup {
+  line-height: 0;
+}
+
+.as-footer-lockup img {
+  height: 32px;
+  width: auto;
+}
+
+.as-footer-tag {
+  margin: 0;
+  color: var(--as-ink-dim);
+  max-width: 34ch;
+}
+
+.as-footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-2);
+}
+
+.as-footer-col .as-label {
+  margin-bottom: var(--as-1);
+}
+
+.as-footer-col a {
+  color: var(--as-ink);
+  text-decoration: none;
+  width: fit-content;
+  border-bottom: 1px solid transparent;
+  transition: border-color var(--as-dur) var(--as-ease);
+}
+
+.as-footer-col a:hover {
+  border-bottom-color: var(--as-ink);
+}
+
+.as-footer-col a.as-proven {
+  color: var(--as-proof);
+}
+
+.as-footer-line {
+  margin: var(--as-6) 0 0;
+  padding-top: var(--as-4);
+  border-top: 1px solid var(--as-sunk);
+  font-size: var(--as-size-label);
+  color: var(--as-ink-dim);
+}
+
+@media (max-width: 760px) {
+  .as-footer-inner {
+    grid-template-columns: 1fr 1fr;
+  }
+  .as-footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+
+/* ============================================================
+   Hero band: the one thing that is not a window
+   ============================================================ */
+
+.as-hero {
+  grid-column: 1 / -1;
+  padding: var(--as-7) 0 var(--as-6);
+  border-bottom: var(--as-bw-chrome) solid var(--as-ink);
+  margin-bottom: var(--as-4);
+}
+
+.as-hero-kicker {
+  margin: 0 0 var(--as-4);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+}
+
+.as-hero-title {
+  margin: 0 0 var(--as-4);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: clamp(38px, 6vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  max-width: 14ch;
+}
+
+.as-hero-sub {
+  margin: 0 0 var(--as-5);
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+  max-width: 58ch;
+  color: var(--as-ink-dim);
+}
+
+.as-button-lg {
+  padding: var(--as-3) var(--as-5);
+  font-size: var(--as-size-data);
+}
+
+@media (max-width: 560px) {
+  .as-hero {
+    padding-top: var(--as-5);
+  }
+}
+
+/* A truncated address and its arrow break as one piece or not at all. Half an
+   address on each of two lines is worse than a label on its own line. */
+.as-addr {
+  white-space: nowrap;
 }

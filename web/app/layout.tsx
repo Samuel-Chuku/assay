@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, Space_Mono } from 'next/font/google';
 
 import './tokens.css';
 import './chrome.css';
+import { Footer } from './components/Footer';
 import { LiveMenuBar } from './components/LiveMenuBar';
 import { WalletProvider } from './components/wallet';
 
@@ -29,7 +30,12 @@ export const metadata: Metadata = {
   title: 'Assay',
   description:
     'Credit for autonomous agents, underwritten on proof. Assay reads an agent’s work history from Ethereum, proves it on Creditcoin without a trusted oracle, and extends a credit line against it.',
-  icons: { icon: '/icon.svg' },
+  // The favicon is app/icon.svg, which Next.js serves without being told.
+  openGraph: {
+    title: 'Assay',
+    description: 'Credit for autonomous agents, underwritten on proof.',
+    images: [{ url: '/og.png', width: 1024, height: 1024 }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -53,7 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         <WalletProvider>
           <LiveMenuBar />
-          <div className="as-desktop">{children}</div>
+          <div className="as-desktop">
+            {children}
+            <Footer />
+          </div>
         </WalletProvider>
       </body>
     </html>
