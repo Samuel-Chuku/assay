@@ -474,7 +474,7 @@ body {
   display: grid;
   gap: var(--as-5);
   padding: var(--as-5);
-  max-width: 1180px;
+  max-width: 1300px;
   margin-inline: auto;
 }
 
@@ -790,7 +790,7 @@ body {
    ============================================================ */
 
 .as-landing {
-  max-width: 1180px;
+  max-width: 1300px;
 }
 
 .as-hero-headline {
@@ -1761,4 +1761,264 @@ a.as-button {
   margin: var(--as-4) 0 0;
   padding-top: var(--as-4);
   border-top: 1px solid var(--as-sunk);
+}
+
+/* ============================================================
+   Scrollboxes
+
+   A list that grows without bound pushes everything under it off
+   the page. These hold a fixed height and scroll inside, with a
+   fade at the bottom edge so a clipped row reads as "more below"
+   rather than as a rendering fault.
+   ============================================================ */
+
+.as-scrollbox {
+  position: relative;
+}
+
+.as-scrollbox-inner {
+  max-height: var(--as-scrollbox-h, 420px);
+  overflow-y: auto;
+  display: grid;
+  gap: var(--as-3);
+  padding-right: var(--as-2);
+}
+
+.as-scrollbox::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: linear-gradient(to bottom, transparent, var(--as-surface));
+  pointer-events: none;
+}
+
+/* Nothing to fade past when the content fits. */
+.as-scrollbox[data-fits='true']::after {
+  display: none;
+}
+
+.as-scrollbox-inner::-webkit-scrollbar {
+  width: 10px;
+}
+
+.as-scrollbox-inner::-webkit-scrollbar-thumb {
+  background: var(--as-ink-faint);
+  border-radius: var(--as-r-chip);
+}
+
+.as-scrollbox-inner::-webkit-scrollbar-track {
+  background: var(--as-sunk);
+  border-radius: var(--as-r-chip);
+}
+
+/* ============================================================
+   Modal — a window, opened over the page
+   ============================================================ */
+
+.as-modal {
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: min(760px, calc(100vw - var(--as-5) * 2));
+  max-height: calc(100dvh - var(--as-6) * 2);
+  color: var(--as-ink);
+}
+
+.as-modal::backdrop {
+  background: color-mix(in srgb, #1A1A1A 62%, transparent);
+}
+
+.as-modal-window {
+  background: var(--as-surface);
+  border: var(--as-bw-chrome) solid var(--as-ink);
+  border-radius: var(--as-r-window);
+  box-shadow: var(--as-shadow-3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--as-6) * 2);
+}
+
+.as-modal-body {
+  padding: var(--as-5);
+  overflow-y: auto;
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-modal-body p {
+  margin: 0 0 var(--as-4);
+  max-width: 68ch;
+}
+
+.as-modal-body p:last-child {
+  margin-bottom: 0;
+}
+
+.as-modal-close {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0 var(--as-2);
+  line-height: 1;
+}
+
+.as-modal-close:hover {
+  opacity: 0.7;
+}
+
+/* ============================================================
+   Disclosure — "More", native
+   ============================================================ */
+
+.as-disclosure {
+  margin-top: var(--as-3);
+  border-top: 1px solid var(--as-sunk);
+  padding-top: var(--as-3);
+}
+
+.as-disclosure-summary {
+  cursor: pointer;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--as-2);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+  padding: var(--as-1) var(--as-2);
+  border-radius: var(--as-r-chip);
+  transition: color var(--as-dur) var(--as-ease), background var(--as-dur) var(--as-ease);
+}
+
+.as-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.as-disclosure-summary:hover {
+  color: var(--as-ink);
+  background: var(--as-sunk);
+}
+
+.as-disclosure-caret {
+  transition: transform var(--as-dur) var(--as-ease);
+}
+
+.as-disclosure[open] .as-disclosure-caret {
+  transform: rotate(90deg);
+}
+
+.as-disclosure-body {
+  padding: var(--as-3) var(--as-2) 0;
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+/* ---- Reasoning: clamped, with two ways to read it in full ---- */
+
+.as-reasoning.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* line-clamp already ends on a line boundary and appends an ellipsis. A fade
+     on top of it showed a ghost of the next line, which looked like a clipping
+     bug rather than a deliberate cut. */
+}
+
+.as-reasoning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--as-4);
+  margin: var(--as-3) 0 0;
+}
+
+.as-reasoning-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--as-2);
+  background: none;
+  border: none;
+  padding: var(--as-1) var(--as-2);
+  margin-left: calc(var(--as-2) * -1);
+  border-radius: var(--as-r-chip);
+  cursor: pointer;
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+  transition: color var(--as-dur) var(--as-ease), background var(--as-dur) var(--as-ease);
+}
+
+.as-reasoning-toggle:hover {
+  color: var(--as-ink);
+  background: var(--as-sunk);
+}
+
+.as-reasoning-full {
+  max-height: none;
+}
+
+.as-modal-lede {
+  color: var(--as-ink-dim);
+  font-size: var(--as-size-body);
+}
+
+/* ---- Evidence explainer ---- */
+
+.as-explain-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--as-chrome);
+  font-size: var(--as-size-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-style: dotted;
+  transition: color var(--as-dur) var(--as-ease);
+}
+
+.as-explain-button:hover {
+  color: var(--as-ink);
+}
+
+.as-modal-heading {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+  margin: var(--as-5) 0 var(--as-2);
+}
+
+.as-modal-heading:first-of-type {
+  margin-top: var(--as-4);
+}
+
+/* An action that is about to trip a freeze. Visible before it is clicked,
+   because learning a rule by tripping it is only interesting once. */
+.as-sim-action.will-freeze {
+  border-color: var(--as-frozen);
+  border-left-color: var(--as-frozen);
+}
+
+.as-sim-action.will-freeze .as-sim-chip {
+  background: var(--as-frozen);
+  color: #1A1A1A;
 }

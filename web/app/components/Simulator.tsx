@@ -15,6 +15,7 @@ import {
   type SimState,
 } from '@/lib/simulate';
 import { Icon, type IconName } from './Icon';
+import { ScrollBox } from './ScrollBox';
 import { Window } from './Window';
 
 /**
@@ -27,6 +28,13 @@ import { Window } from './Window';
  */
 
 type Step = { outcome: Outcome; state: SimState };
+
+/** 1st, 2nd, 3rd, 4th. The naive version produced "2th". */
+function ordinal(n: number): string {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+}
 
 /**
  * Colour carries meaning here, not decoration.
@@ -44,7 +52,15 @@ const ACTIONS: {
   label: string;
   icon: IconName;
   tone: Tone;
-  promise: string;
+  /**
+   * What this action will do, given where the agent is right now.
+   *
+   * A fixed sentence per button described the mechanism but never the
+   * consequence, so the only way to learn a rule was to trip it. These read the
+   * current state and say what is about to happen, which turns the grid from a
+   * set of controls into the rules themselves, legible before you commit.
+   */
+  promise: (s: SimState) => string;
   show: (s: SimState) => boolean;
   disabled?: (s: SimState) => string | null;
 }[] = [
@@ -53,7 +69,14 @@ const ACTIONS: {
     label: 'Apply for credit',
     icon: 'judge',
     tone: 'judge',
-    promise: 'Runs the policy envelope, then the underwriter, and returns a verdict.',
+    promise: (s) => {
+      const refusal = envelope(s);
+      if (refusal) return `Will be refused by rule before any model runs: ${refusal.reason}.`;
+      const j = judge(s);
+      return j.approve
+        ? `The underwriter will read ${s.feedbackEntries} rating${s.feedbackEntries === 1 ? '' : 's'} from ${s.distinctRaters} client${s.distinctRaters === 1 ? '' : 's'} and is likely to approve.`
+        : 'The evidence is usable, so the underwriter will read it and decline anyway.';
+    },
     show: (s) => s.line === 'None',
   },
   {
@@ -61,7 +84,8 @@ const ACTIONS: {
     label: 'Post collateral',
     icon: 'credit',
     tone: 'good',
-    promise: 'Accepts the offer and activates the line.',
+    promise: (s) =>
+      `Posts ${(s.limit * s.collateralRatio).toFixed(2)} tCTC of collateral and activates the line. The counters get snapshotted here.`,
     show: (s) => s.line === 'Offered',
   },
   {
@@ -69,7 +93,12 @@ const ACTIONS: {
     label: 'Draw funds',
     icon: 'draw',
     tone: 'good',
-    promise: 'Re-checks every freeze trigger, then releases funds from the pool.',
+    promise: (s) => {
+      const reason = pendingFreeze(s);
+      return reason === 'NotFrozen'
+        ? 'All three freeze triggers pass, so funds will be released from the pool.'
+        : `Will be refused and will freeze the line: ${reason}.`;
+    },
     show: (s) => s.line === 'Active' || s.line === 'Frozen',
     disabled: (s) => (s.drawn >= s.limit ? 'The line is fully drawn.' : null),
   },
@@ -78,7 +107,8 @@ const ACTIONS: {
     label: 'Repay',
     icon: 'repay',
     tone: 'good',
-    promise: 'Returns principal and interest, and releases the collateral.',
+    promise: (s) =>
+      `Returns ${s.drawn.toFixed(2)} tCTC plus ${(s.drawn * (s.rateBps / 10_000)).toFixed(2)} of interest, and releases the collateral. Works even when frozen.`,
     show: (s) => s.drawn > 0 && (s.line === 'Active' || s.line === 'Frozen'),
   },
   {
@@ -86,7 +116,10 @@ const ACTIONS: {
     label: 'Sell the identity',
     icon: 'identity',
     tone: 'caution',
-    promise: 'Transfers the ERC-8004 token to someone else. This is the attack.',
+    promise: (s) =>
+      s.line === 'Active' || s.line === 'Offered'
+        ? 'The attack. Nothing freezes yet: Creditcoin only learns of it once the transfer is proven.'
+        : 'Transfers the ERC-8004 token to someone else. Any future application will be refused by rule.',
     show: (s) => s.line !== 'Repaid',
   },
   {
@@ -94,7 +127,10 @@ const ACTIONS: {
     label: 'Change payment wallet',
     icon: 'wallet',
     tone: 'caution',
-    promise: 'Calls setAgentWallet, pointing revenue at a new address.',
+    promise: (s) =>
+      s.line === 'Active'
+        ? 'Points revenue at a new address. The next draw will be refused and the line will freeze.'
+        : 'Points revenue at a new address, which makes proven revenue untraceable to this borrower.',
     show: (s) => s.line !== 'Repaid',
   },
   {
@@ -102,7 +138,10 @@ const ACTIONS: {
     label: 'Wait four days',
     icon: 'clock',
     tone: 'caution',
-    promise: 'Nothing new gets proven, so the evidence goes stale.',
+    promise: (s) =>
+      s.evidenceAgeDays + 4 > E.maxEvidenceAgeDays
+        ? `Pushes the newest proof to ${(s.evidenceAgeDays + 4).toFixed(1)} days, past the ${E.maxEvidenceAgeDays} day bound. Evidence goes stale.`
+        : 'Four days pass with nothing proven.',
     show: (s) => s.line !== 'Repaid',
   },
   {
@@ -110,7 +149,8 @@ const ACTIONS: {
     label: 'Prove new work',
     icon: 'chain',
     tone: 'proof',
-    promise: 'A new client rates the agent on Ethereum; the watcher proves it.',
+    promise: (s) =>
+      `Adds a ${ordinal(s.distinctRaters + 1)} distinct client and resets the evidence clock to zero.`,
     show: (s) => s.line !== 'Repaid',
   },
 ];
@@ -180,11 +220,13 @@ export function Simulator() {
         <div className="as-sim-actions">
           {available.map((a) => {
             const why = a.disabled?.(state) ?? null;
+            const willFreeze =
+              a.id === 'draw' && state.line === 'Active' && pendingFreeze(state) !== 'NotFrozen';
             return (
               <button
                 key={a.id}
                 type="button"
-                className={`as-sim-action is-${a.tone}`}
+                className={`as-sim-action is-${a.tone}${willFreeze ? ' will-freeze' : ''}`}
                 onClick={() => run(a.id)}
                 disabled={Boolean(why)}
                 title={why ?? undefined}
@@ -195,7 +237,7 @@ export function Simulator() {
                   </span>
                   <span className="as-sim-action-label">{a.label}</span>
                 </span>
-                <span className="as-sim-action-promise">{why ?? a.promise}</span>
+                <span className="as-sim-action-promise">{why ?? a.promise(state)}</span>
               </button>
             );
           })}
@@ -262,6 +304,7 @@ export function Simulator() {
             Nothing yet. Take an action above and the reasoning appears here, newest first.
           </p>
         ) : (
+          <ScrollBox maxHeight={460}>
           <ol className="as-sim-log">
             {log.map((step, i) => (
               <li
@@ -284,6 +327,7 @@ export function Simulator() {
               </li>
             ))}
           </ol>
+          </ScrollBox>
         )}
       </Window>
       </div>

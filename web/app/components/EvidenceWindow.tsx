@@ -1,5 +1,6 @@
 import type { ProvenFact } from '@/lib/evidence';
 import { ProofRow } from './ProofRow';
+import { ScrollBox } from './ScrollBox';
 import { Window } from './Window';
 
 /**
@@ -40,13 +41,11 @@ export function EvidenceWindow({
           survive source-chain reorganisation.
         </p>
       ) : (
-        <div className="as-evidence-scroll">
-        <div className="as-evidence-rows">
+        <ScrollBox maxHeight={520}>
           {facts.map((fact) => (
             <ProofRow key={`${fact.verificationTxHash}-${fact.queryId}`} fact={fact} />
           ))}
-        </div>
-        </div>
+        </ScrollBox>
       )}
 
       <p className="as-caption">

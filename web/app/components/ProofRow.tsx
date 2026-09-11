@@ -1,4 +1,5 @@
 import type { ProvenFact } from '@/lib/evidence';
+import { EvidenceExplainer } from './EvidenceExplainer';
 import { TxLink, truncate } from './TxLink';
 
 /**
@@ -45,6 +46,7 @@ export function ProofRow({ fact }: { fact: ProvenFact }) {
       </p>
 
       <footer className="as-proofrow-meta">
+        <EvidenceExplainer fact={fact} />
         <span>
           block <span className="as-num">{fact.sourceBlock}</span>
         </span>
