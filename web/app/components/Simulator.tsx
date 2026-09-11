@@ -11,6 +11,7 @@ import {
   pendingFreeze,
   type ActionId,
   type Outcome,
+  type LineState,
   type SimState,
 } from '@/lib/simulate';
 import { Icon, type IconName } from './Icon';
@@ -27,10 +28,22 @@ import { Window } from './Window';
 
 type Step = { outcome: Outcome; state: SimState };
 
+/**
+ * Colour carries meaning here, not decoration.
+ *
+ *   proof    the blue reserved for cryptographically proven facts, used only
+ *            by the action that literally proves one
+ *   good     value moving as intended
+ *   caution  the world changing underneath a line: a sale, a swap, time
+ *   judge    a decision being made
+ */
+type Tone = 'proof' | 'good' | 'caution' | 'judge';
+
 const ACTIONS: {
   id: ActionId;
   label: string;
   icon: IconName;
+  tone: Tone;
   promise: string;
   show: (s: SimState) => boolean;
   disabled?: (s: SimState) => string | null;
@@ -39,6 +52,7 @@ const ACTIONS: {
     id: 'apply',
     label: 'Apply for credit',
     icon: 'judge',
+    tone: 'judge',
     promise: 'Runs the policy envelope, then the underwriter, and returns a verdict.',
     show: (s) => s.line === 'None',
   },
@@ -46,6 +60,7 @@ const ACTIONS: {
     id: 'accept',
     label: 'Post collateral',
     icon: 'credit',
+    tone: 'good',
     promise: 'Accepts the offer and activates the line.',
     show: (s) => s.line === 'Offered',
   },
@@ -53,6 +68,7 @@ const ACTIONS: {
     id: 'draw',
     label: 'Draw funds',
     icon: 'draw',
+    tone: 'good',
     promise: 'Re-checks every freeze trigger, then releases funds from the pool.',
     show: (s) => s.line === 'Active' || s.line === 'Frozen',
     disabled: (s) => (s.drawn >= s.limit ? 'The line is fully drawn.' : null),
@@ -61,6 +77,7 @@ const ACTIONS: {
     id: 'repay',
     label: 'Repay',
     icon: 'repay',
+    tone: 'good',
     promise: 'Returns principal and interest, and releases the collateral.',
     show: (s) => s.drawn > 0 && (s.line === 'Active' || s.line === 'Frozen'),
   },
@@ -68,6 +85,7 @@ const ACTIONS: {
     id: 'sell',
     label: 'Sell the identity',
     icon: 'identity',
+    tone: 'caution',
     promise: 'Transfers the ERC-8004 token to someone else. This is the attack.',
     show: (s) => s.line !== 'Repaid',
   },
@@ -75,6 +93,7 @@ const ACTIONS: {
     id: 'changeWallet',
     label: 'Change payment wallet',
     icon: 'wallet',
+    tone: 'caution',
     promise: 'Calls setAgentWallet, pointing revenue at a new address.',
     show: (s) => s.line !== 'Repaid',
   },
@@ -82,6 +101,7 @@ const ACTIONS: {
     id: 'age',
     label: 'Wait four days',
     icon: 'clock',
+    tone: 'caution',
     promise: 'Nothing new gets proven, so the evidence goes stale.',
     show: (s) => s.line !== 'Repaid',
   },
@@ -89,6 +109,7 @@ const ACTIONS: {
     id: 'proveFresh',
     label: 'Prove new work',
     icon: 'chain',
+    tone: 'proof',
     promise: 'A new client rates the agent on Ethereum; the watcher proves it.',
     show: (s) => s.line !== 'Repaid',
   },
@@ -114,6 +135,10 @@ export function Simulator() {
 
   const freeze = state.line === 'Active' || state.line === 'Frozen' ? pendingFreeze(state) : 'NotFrozen';
 
+  // A repaid line has nothing left to do, and an action window with no actions
+  // in it reads as a bug rather than as an ending.
+  const available = ACTIONS.filter((a) => a.show(state));
+
   return (
     <>
       <Window title="1 · Choose an agent">
@@ -137,24 +162,37 @@ export function Simulator() {
         </div>
       </Window>
 
+      <Window title="The line, so far">
+        <LifecycleRail state={state} />
+      </Window>
+
       <Window
         title="2 · Take an action"
         accent={state.line === 'Frozen' ? 'frozen' : undefined}
       >
+        {available.length === 0 ? (
+          <p className="as-state">
+            <strong>THIS RUN IS FINISHED</strong> — the line was repaid, the collateral went back,
+            and the lenders kept the interest. Start over to try a different path.
+          </p>
+        ) : null}
+
         <div className="as-sim-actions">
-          {ACTIONS.filter((a) => a.show(state)).map((a) => {
+          {available.map((a) => {
             const why = a.disabled?.(state) ?? null;
             return (
               <button
                 key={a.id}
                 type="button"
-                className="as-sim-action"
+                className={`as-sim-action is-${a.tone}`}
                 onClick={() => run(a.id)}
                 disabled={Boolean(why)}
                 title={why ?? undefined}
               >
                 <span className="as-sim-action-head">
-                  <Icon name={a.icon} />
+                  <span className="as-sim-chip">
+                    <Icon name={a.icon} size={24} />
+                  </span>
                   <span className="as-sim-action-label">{a.label}</span>
                 </span>
                 <span className="as-sim-action-promise">{why ?? a.promise}</span>
@@ -162,6 +200,14 @@ export function Simulator() {
             );
           })}
         </div>
+
+        {log.length > 0 ? (
+          <p className="as-sim-reset">
+            <button type="button" className="as-button" onClick={() => reset(profileId)}>
+              START OVER
+            </button>
+          </p>
+        ) : null}
       </Window>
 
       <div className="as-sim-split">
@@ -171,34 +217,34 @@ export function Simulator() {
           <dd className={state.line === 'Frozen' ? 'as-verdict-declined' : 'as-num'}>{state.line}</dd>
 
           <dt className="as-label">Ratings</dt>
-          <dd className="as-num">
+          <Value>
             {state.feedbackEntries} from {state.distinctRaters} client
             {state.distinctRaters === 1 ? '' : 's'}
-          </dd>
+          </Value>
 
           <dt className="as-label">Raters with an identity</dt>
-          <dd className="as-num">{state.ratersWithIdentity}</dd>
+          <Value>{state.ratersWithIdentity}</Value>
 
           <dt className="as-label">Newest proof</dt>
-          <dd className="as-num">
+          <Value tone={state.evidenceAgeDays > E.maxEvidenceAgeDays ? 'caution' : undefined}>
             {state.evidenceAgeDays.toFixed(1)} days old
             {state.evidenceAgeDays > E.maxEvidenceAgeDays ? ' · stale' : ''}
-          </dd>
+          </Value>
 
           <dt className="as-label">Identity transfers</dt>
-          <dd className="as-num">{state.ownerChanges}</dd>
+          <Value tone={state.ownerChanges > 0 ? 'caution' : undefined}>{state.ownerChanges}</Value>
 
           <dt className="as-label">Wallet changes</dt>
-          <dd className="as-num">{state.walletChanges}</dd>
+          <Value tone={state.walletChanges > 0 ? 'caution' : undefined}>{state.walletChanges}</Value>
 
           {state.limit > 0 ? (
             <>
               <dt className="as-label">Limit</dt>
-              <dd className="as-num">{state.limit.toFixed(2)} tCTC</dd>
+              <Value>{state.limit.toFixed(2)} tCTC</Value>
               <dt className="as-label">Drawn</dt>
-              <dd className="as-num">{state.drawn.toFixed(2)} tCTC</dd>
+              <Value>{state.drawn.toFixed(2)} tCTC</Value>
               <dt className="as-label">Rate</dt>
-              <dd className="as-num">{state.rateBps} bps</dd>
+              <Value>{state.rateBps} bps</Value>
             </>
           ) : null}
         </dl>
@@ -218,9 +264,12 @@ export function Simulator() {
         ) : (
           <ol className="as-sim-log">
             {log.map((step, i) => (
-              <li key={log.length - i} className={`as-sim-step is-${step.outcome.tone}`}>
-                <span className="as-sim-step-icon">
-                  <Icon name={step.outcome.icon} size={26} />
+              <li
+                key={log.length - i}
+                className={`as-sim-step is-${step.outcome.tone}${i === 0 ? ' is-newest' : ''}`}
+              >
+                <span className="as-sim-chip as-sim-step-icon">
+                  <Icon name={step.outcome.icon} size={24} />
                 </span>
                 <div className="as-sim-step-body">
                   <p className="as-sim-step-title">{step.outcome.title}</p>
@@ -239,6 +288,89 @@ export function Simulator() {
       </Window>
       </div>
     </>
+  );
+}
+
+/**
+ * The credit line's lifecycle, with the current position lit.
+ *
+ * A state name in a table tells you where you are. This tells you where you
+ * are *and* what is still reachable, which is the thing the simulator is
+ * actually about. Terminal states sit at the end of their own branch because
+ * repaid and frozen are not the same kind of ending.
+ */
+/**
+ * A value that flashes when it changes.
+ *
+ * Keyed on its own content, so React replaces the node and the CSS animation
+ * runs again. No timers, no effect, nothing to clean up, and it cannot get
+ * stuck lit if a render is interrupted.
+ */
+function Value({ children, tone }: { children: React.ReactNode; tone?: 'caution' }) {
+  const text = String(children);
+  return (
+    <dd
+      key={text}
+      className={`as-num as-sim-value${tone === 'caution' ? ' is-caution' : ''}`}
+    >
+      {children}
+    </dd>
+  );
+}
+
+function LifecycleRail({ state }: { state: SimState }) {
+  const path: { key: LineState; label: string; icon: IconName }[] = [
+    { key: 'None', label: 'No line', icon: 'start' },
+    { key: 'Offered', label: 'Offered', icon: 'judge' },
+    { key: 'Active', label: 'Active', icon: 'credit' },
+  ];
+  const ends: { key: LineState; label: string; icon: IconName }[] = [
+    { key: 'Frozen', label: 'Frozen', icon: 'freeze' },
+    { key: 'Repaid', label: 'Repaid', icon: 'repay' },
+  ];
+
+  const order: LineState[] = ['None', 'Offered', 'Active'];
+  const reached = (k: LineState) => {
+    if (k === state.line) return true;
+    const here = order.indexOf(state.line);
+    const there = order.indexOf(k);
+    // Terminal states imply everything before them was reached.
+    if (here === -1) return there !== -1;
+    return there !== -1 && there < here;
+  };
+
+  return (
+    <div className="as-rail" role="img" aria-label={`Credit line state: ${state.line}`}>
+      {path.map((p, i) => (
+        <div key={p.key} className="as-rail-seg">
+          {i > 0 ? <span className={`as-rail-link${reached(p.key) ? ' is-on' : ''}`} /> : null}
+          <span
+            className={`as-rail-pip${state.line === p.key ? ' is-now' : ''}${
+              reached(p.key) ? ' is-reached' : ''
+            }`}
+          >
+            <Icon name={p.icon} size={22} />
+            <span className="as-rail-label">{p.label}</span>
+          </span>
+        </div>
+      ))}
+
+      <span className="as-rail-fork" aria-hidden="true" />
+
+      <div className="as-rail-ends">
+        {ends.map((e) => (
+          <span
+            key={e.key}
+            className={`as-rail-pip as-rail-end is-${e.key.toLowerCase()}${
+              state.line === e.key ? ' is-now' : ''
+            }`}
+          >
+            <Icon name={e.icon} size={22} />
+            <span className="as-rail-label">{e.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

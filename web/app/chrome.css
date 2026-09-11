@@ -953,6 +953,7 @@ a.as-button {
     --as-proof-dim: #2F6E90;
     --as-frozen: #E0A092;
     --as-settled: #8FC9B4;
+    --as-caution: #D9A85C;
 
     --as-wave: #24454C;
   }
@@ -971,6 +972,7 @@ a.as-button {
   --as-proof-dim: #2F6E90;
   --as-frozen: #E0A092;
   --as-settled: #8FC9B4;
+  --as-caution: #D9A85C;
 
   --as-wave: #24454C;
 }
@@ -1572,4 +1574,191 @@ a.as-button {
   .as-menubar-divider {
     display: none;
   }
+}
+
+/* ============================================================
+   Simulator: colour and motion
+
+   Motion here is mechanical, not soft. The whole interface is hard
+   shadows and square caps, so easing is steps or linear and nothing
+   bounces, fades slowly, or blurs.
+   ============================================================ */
+
+.as-sim-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  background: var(--as-sunk);
+  color: var(--as-ink);
+}
+
+/* Tone on the chip and the left border only. The card stays paper, so a
+   grid of actions does not turn into a paint chart. */
+.as-sim-action.is-judge .as-sim-chip { background: var(--as-sunk); }
+.as-sim-action.is-good .as-sim-chip { background: var(--as-settled); color: #1A1A1A; }
+.as-sim-action.is-caution .as-sim-chip { background: var(--as-caution); color: #1A1A1A; }
+.as-sim-action.is-proof .as-sim-chip { background: var(--as-proof); color: #FBF8F0; }
+
+.as-sim-action {
+  border-left-width: 5px;
+}
+
+.as-sim-action.is-good { border-left-color: var(--as-settled); }
+.as-sim-action.is-caution { border-left-color: var(--as-caution); }
+.as-sim-action.is-proof { border-left-color: var(--as-proof); }
+
+.as-sim-step.is-good .as-sim-chip { background: var(--as-settled); color: #1A1A1A; }
+.as-sim-step.is-bad .as-sim-chip { background: var(--as-frozen); color: #1A1A1A; }
+.as-sim-step.is-neutral .as-sim-chip { background: var(--as-caution); color: #1A1A1A; }
+
+/* ---- The lifecycle rail ---- */
+
+.as-rail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--as-2);
+  padding: var(--as-2) 0;
+}
+
+.as-rail-seg {
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+}
+
+.as-rail-link {
+  display: block;
+  width: 34px;
+  height: 3px;
+  background: var(--as-ink-faint);
+  transition: background var(--as-dur) var(--as-ease);
+}
+
+.as-rail-link.is-on {
+  background: var(--as-ink);
+}
+
+.as-rail-pip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--as-2);
+  padding: var(--as-2) var(--as-3);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+  color: var(--as-ink-faint);
+  font-family: var(--as-chrome);
+  font-size: var(--as-size-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition:
+    color var(--as-dur) var(--as-ease),
+    border-color var(--as-dur) var(--as-ease),
+    box-shadow var(--as-dur) var(--as-ease);
+}
+
+.as-rail-pip.is-reached {
+  color: var(--as-ink);
+  border-color: var(--as-ink);
+}
+
+/* Where the line actually is. One thing on the rail is lit, and it is
+   the only element on the page that moves on its own. */
+.as-rail-pip.is-now {
+  color: var(--as-ink);
+  border-color: var(--as-ink);
+  box-shadow: var(--as-shadow-1);
+  animation: as-pip-land 240ms steps(3) 1;
+}
+
+.as-rail-pip.as-rail-end.is-frozen.is-now {
+  border-color: var(--as-frozen);
+  background: color-mix(in srgb, var(--as-frozen) 26%, var(--as-surface));
+  animation: as-shake 200ms steps(4) 1;
+}
+
+.as-rail-pip.as-rail-end.is-repaid.is-now {
+  border-color: var(--as-settled);
+  background: color-mix(in srgb, var(--as-settled) 30%, var(--as-surface));
+}
+
+.as-rail-fork {
+  width: 34px;
+  height: 3px;
+  background: var(--as-ink-faint);
+}
+
+.as-rail-ends {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-2);
+}
+
+@keyframes as-pip-land {
+  from { transform: translate(-3px, -3px); box-shadow: var(--as-shadow-3); }
+  to { transform: none; box-shadow: var(--as-shadow-1); }
+}
+
+@keyframes as-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+/* ---- Newest log entry ---- */
+
+.as-sim-step.is-newest {
+  animation: as-step-in 200ms steps(4) 1;
+}
+
+@keyframes as-step-in {
+  from { transform: translateX(-14px); opacity: 0.25; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ---- A value that just changed ---- */
+
+/* Inline-block so the flash and the underline hug the figure. As a block it
+   filled the whole grid cell and read as a progress bar. */
+.as-sim-value {
+  display: inline-block;
+  width: fit-content;
+  animation: as-value-flash 520ms steps(4) 1;
+  border-radius: var(--as-r-chip);
+  padding: 0 var(--as-1);
+  margin-left: calc(var(--as-1) * -1);
+}
+
+.as-sim-value.is-caution {
+  color: var(--as-ink);
+  box-shadow: inset 0 -0.55em 0 color-mix(in srgb, var(--as-caution) 55%, transparent);
+}
+
+@keyframes as-value-flash {
+  from { background: color-mix(in srgb, var(--as-caution) 70%, transparent); }
+  to { background: transparent; }
+}
+
+/* Nobody who asked for less motion wants a shaking pip. */
+@media (prefers-reduced-motion: reduce) {
+  .as-rail-pip.is-now,
+  .as-sim-step.is-newest,
+  .as-sim-value,
+  .as-rail-pip.as-rail-end.is-frozen.is-now {
+    animation: none;
+  }
+}
+
+.as-sim-reset {
+  margin: var(--as-4) 0 0;
+  padding-top: var(--as-4);
+  border-top: 1px solid var(--as-sunk);
 }

@@ -23,6 +23,8 @@
   --as-proof-dim: #7FB8D9;  /* proof, de-emphasised (borders) */
   --as-frozen:    #E8A89A;  /* frozen line, refused application */
   --as-settled:   #A8DCC8;  /* repaid, healthy utilisation */
+  --as-caution:   #E0B166;  /* the world moved: a transfer, a swap, time passing.
+                               Not a refusal, but what causes one. */
 
   /* ---- Ambient: wallpaper only, never carries meaning ----- */
   --as-wave:      #A9D6DD;

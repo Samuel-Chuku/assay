@@ -18,7 +18,8 @@ export type IconName =
   | 'clock'
   | 'check'
   | 'cross'
-  | 'chain';
+  | 'chain'
+  | 'start';
 
 const PATHS: Record<IconName, React.ReactNode> = {
   // A registered identity: a token with a mark on it.
@@ -84,6 +85,8 @@ const PATHS: Record<IconName, React.ReactNode> = {
     </>
   ),
   check: <path d="M4.5 12.5 10 18 19.5 6.5" />,
+  // Nothing has happened yet: an open ring, not a symbol of failure.
+  start: <circle cx="12" cy="12" r="7" strokeDasharray="3 3" />,
   cross: <path d="M6 6l12 12M18 6 6 18" />,
   // Two chains, linked by a proof.
   chain: (
