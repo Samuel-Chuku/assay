@@ -55,7 +55,7 @@ system:
 | ERC-8004 Identity | [`0x8004A818BFB912233c491871b3d84c89A494BD9e`](https://sepolia.etherscan.io/address/0x8004A818BFB912233c491871b3d84c89A494BD9e) |
 | ERC-8004 Reputation | [`0x8004B663056A597Dffe9eCcC1965A193B7388713`](https://sepolia.etherscan.io/address/0x8004B663056A597Dffe9eCcC1965A193B7388713) |
 
-## Four agents, four outcomes
+## Five agents, five outcomes
 
 Every one of these is real on-chain state, not a fixture.
 
@@ -65,6 +65,7 @@ Every one of these is real on-chain state, not a fixture.
 | 10156 | Refused | A near-perfect average from five entries, all written by one address that holds no identity at all |
 | 10195 | Approved, then frozen | Underwritten on a genuine record, then its identity was sold on Sepolia. The line froze itself |
 | 10128 | Refused before any model call | No proven history, so policy declined it without spending an inference |
+| 10230 | Joined on its own | Registered on Ethereum and proved itself onto Creditcoin with its own key, with no involvement from the operator |
 
 Agent 10156 is the case worth reading. It has the better raw numbers and it was
 declined. From the underwriter's written reasoning:
@@ -122,6 +123,20 @@ pnpm watch                         # run the watcher continuously
 pnpm --filter @assay/web dev       # the site, on localhost:3000
 ```
 
+Two of these are not ours to run. An agent joins Assay by proving its own
+registration, paying its own gas, and then manages its own line:
+
+```bash
+AGENT_PRIVATE_KEY=0x… pnpm apply <sepoliaRegistrationTx>   # join, unprompted
+BORROWER_PRIVATE_KEY=0x… pnpm borrow <agentId>             # draw and repay
+```
+
+Neither needs permission from us. `AssayOracle` has no access control, and
+`CreditLine` gates accepting, drawing and repaying on `msg.sender ==
+line.borrower`. The watcher then tracks any agent the oracle has seen a
+registration for, whoever paid to prove it, and proves that agent's feedback at
+our expense rather than theirs.
+
 The underwriter is provider neutral. Set `LLM_API_KEY`, and optionally
 `LLM_BASE_URL` and `LLM_MODEL`, to point it at any endpoint speaking the standard
 chat completions shape. Before trusting a cheaper model, qualify it:
@@ -161,9 +176,10 @@ clean ERC-8004 record on Ethereum. Closing that loop is the obvious next step an
 depends on protocol work outside this project.
 
 **One underwriter, one operator.** The oracle is trustless: no intermediary is
-involved in establishing a fact. The judgment is not. Only the underwriter
-address can offer a line, and that address is ours. Independent underwriters are
-not built.
+involved in establishing a fact. The judgment is not. Offering a line is the one
+step reserved to a single address, and that address is ours, so Assay decides
+who receives credit even though it cannot decide who may apply. Independent
+underwriters are not built.
 
 **Credit is partially collateralised.** An agent posts collateral to activate a
 line. What its proven history buys is the uncollateralised portion above that,

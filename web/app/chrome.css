@@ -1877,16 +1877,20 @@ a.as-button {
    Disclosure — "More", native
    ============================================================ */
 
+/* Same treatment: a band you can tell is a control. */
 .as-disclosure {
-  margin-top: var(--as-3);
-  border-top: 1px solid var(--as-sunk);
-  padding-top: var(--as-3);
+  margin: var(--as-3) calc(var(--as-4) * -1) 0;
+  background: var(--as-sunk);
+  border-top: var(--as-bw) solid var(--as-ink-faint);
+  border-bottom: var(--as-bw) solid var(--as-ink-faint);
 }
 
 .as-disclosure-summary {
   cursor: pointer;
   list-style: none;
-  display: inline-flex;
+  display: flex;
+  width: 100%;
+  padding: var(--as-3) var(--as-4);
   align-items: center;
   gap: var(--as-2);
   font-family: var(--as-chrome);
@@ -1895,8 +1899,6 @@ a.as-button {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--as-ink-dim);
-  padding: var(--as-1) var(--as-2);
-  border-radius: var(--as-r-chip);
   transition: color var(--as-dur) var(--as-ease), background var(--as-dur) var(--as-ease);
 }
 
@@ -1918,7 +1920,7 @@ a.as-button {
 }
 
 .as-disclosure-body {
-  padding: var(--as-3) var(--as-2) 0;
+  padding: 0 var(--as-4) var(--as-4);
   font-size: var(--as-size-body);
   line-height: var(--as-lh-body);
   color: var(--as-ink-dim);
@@ -1936,11 +1938,25 @@ a.as-button {
      bug rather than a deliberate cut. */
 }
 
+/*
+ * An interactive band, not a pair of links floating in body copy.
+ *
+ * Two toggles sitting side by side in the text read as one control, and
+ * neither looked clickable. Tinting the strip and pushing the secondary action
+ * to the far edge makes it obvious that it is a distinct region with two
+ * separate things to press.
+ */
 .as-reasoning-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--as-4);
-  margin: var(--as-3) 0 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--as-3);
+  margin: var(--as-3) calc(var(--as-4) * -1) 0;
+  padding: var(--as-2) var(--as-4);
+  background: var(--as-sunk);
+  border-top: var(--as-bw) solid var(--as-ink-faint);
+  border-bottom: var(--as-bw) solid var(--as-ink-faint);
 }
 
 .as-reasoning-toggle {
@@ -2109,4 +2125,43 @@ a.as-button {
 
 .as-code code {
   white-space: pre;
+}
+
+/* The chain name, so a block height cannot be misread as a date. */
+.as-chain-tag {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--as-ink-dim);
+}
+
+.as-block-hash {
+  color: var(--as-ink-faint);
+}
+
+/* ---- Agent list: bounded, searchable ---- */
+
+.as-agent-search {
+  display: flex;
+  align-items: center;
+  gap: var(--as-3);
+  flex-wrap: wrap;
+  margin: var(--as-4) 0 0;
+}
+
+.as-agent-search .as-input {
+  flex: 0 1 12ch;
+  min-width: 8ch;
+}
+
+.as-agent-count {
+  font-size: var(--as-size-label);
+  color: var(--as-ink-dim);
+  margin-left: auto;
+}
+
+.as-agent-more {
+  margin: var(--as-3) 0 0;
+  padding-top: var(--as-3);
+  border-top: 1px solid var(--as-sunk);
 }

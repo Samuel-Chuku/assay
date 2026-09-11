@@ -2,6 +2,7 @@ import Link from 'next/link';
 
 import { getAgents, getPool } from '@/lib/agents';
 import { AgentCard } from '../components/AgentCard';
+import { AgentList } from '../components/AgentList';
 import { PoolWindow } from '../components/PoolWindow';
 import { Window } from '../components/Window';
 
@@ -27,27 +28,7 @@ export default async function AppPage() {
             has been attested on Sepolia and verified on Creditcoin.
           </p>
         ) : (
-          <ul className="as-agent-list">
-            {agents.map((agent) => (
-              <li key={agent.agentId}>
-                <Link href={`/app/${agent.agentId}`} className="as-agent-row">
-                  <span className="as-agent-id">#{agent.agentId}</span>
-                  <span className="as-agent-verdict">
-                    {agent.verdict
-                      ? agent.verdict.approve
-                        ? 'APPROVED'
-                        : 'DECLINED'
-                      : 'not underwritten'}
-                  </span>
-                  <span className="as-agent-line">
-                    {agent.line ? agent.line.state.toUpperCase() : 'no line'}
-                  </span>
-                  <span className="as-proven as-num">{agent.feedbackCount} facts</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <AgentList agents={agents} />
         )}
       </Window>
 

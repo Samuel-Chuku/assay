@@ -104,10 +104,41 @@ async function main(): Promise<void> {
   ]);
   console.log(`  oracle ${oracleLogs.length}, credit ${creditLogs.length}, pool ${poolLogs.length}`);
 
+  let unresolved = 0;
+
+  /**
+   * Retries the transient failures these endpoints produce under load.
+   *
+   * A throttled request is not a missing fact. Without this, ten of twenty-one
+   * proofs silently lost their Ethereum link and rendered as dashes, which
+   * reads as evidence that does not exist rather than evidence we failed to
+   * fetch. That is the worst possible way for this file to be wrong.
+   */
+  async function resilient<T>(run: () => Promise<T>): Promise<T> {
+    let last: unknown;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      try {
+        return await run();
+      } catch (error) {
+        last = error;
+        const message = (error as Error).message ?? '';
+        const transient =
+          message.includes('-32005') ||
+          message.includes('Too Many Requests') ||
+          message.includes('timeout') ||
+          message.includes('missing response') ||
+          message.includes('SERVER_ERROR');
+        if (!transient) throw error;
+        await new Promise((r) => setTimeout(r, 1_500 * (attempt + 1)));
+      }
+    }
+    throw last;
+  }
+
   /** Reconstructs the Sepolia transaction a proof was built from. */
   async function resolve(log: ethers.Log): Promise<Partial<Proof>> {
     try {
-      const submission = await cc.getTransaction(log.transactionHash);
+      const submission = await resilient(() => cc.getTransaction(log.transactionHash));
       const decoded = oracle.interface.parseTransaction({ data: submission!.data });
       if (!decoded || decoded.name !== 'execute') return {};
 
@@ -117,17 +148,19 @@ async function main(): Promise<void> {
         isLeft: s[1],
       }));
       const txIndex = Number(
-        await prover.calculateTxIndex({ root: decoded.args.merkleRoot, siblings })
+        await resilient(() => prover.calculateTxIndex({ root: decoded.args.merkleRoot, siblings }))
       );
-      const sourceTx = (await sep.send('eth_getTransactionByBlockNumberAndIndex', [
-        quantity(blockHeight),
-        quantity(txIndex),
-      ])) as { hash?: string } | null;
+      const sourceTx = (await resilient(() =>
+        sep.send('eth_getTransactionByBlockNumberAndIndex', [
+          quantity(blockHeight),
+          quantity(txIndex),
+        ])
+      )) as { hash?: string } | null;
       if (!sourceTx?.hash) return {};
 
       const [sourceBlock, verificationBlock] = await Promise.all([
-        sep.getBlock(blockHeight),
-        cc.getBlock(log.blockNumber),
+        resilient(() => sep.getBlock(blockHeight)),
+        resilient(() => cc.getBlock(log.blockNumber)),
       ]);
 
       return {
@@ -138,7 +171,11 @@ async function main(): Promise<void> {
             ? Math.max(0, verificationBlock.timestamp - sourceBlock.timestamp)
             : null,
       };
-    } catch {
+    } catch (error) {
+      unresolved++;
+      console.warn(
+        `\n  could not resolve the source for ${log.transactionHash.slice(0, 12)}…: ${(error as Error).message.slice(0, 90)}`
+      );
       return {};
     }
   }
@@ -277,6 +314,17 @@ async function main(): Promise<void> {
 
   type Story = { id: number; headline: string; what: string; ending: string };
 
+  const feedbackFor = (id: number) =>
+    proofs.filter((p) => p.agentId === id && p.eventName === 'NewFeedback').length;
+
+  /** Among judgment refusals, the one that actually had the strongest record. */
+  const bestNumbersRefused = agentIds
+    .filter((id) => {
+      const v = verdictFor(id);
+      return v && !v.approve && v.source === 'judgment';
+    })
+    .sort((a, b) => feedbackFor(b) - feedbackFor(a))[0];
+
   const stories: Story[] = agentIds.map((id): Story => {
     const v = verdictFor(id);
     const line = lineFor(id);
@@ -309,10 +357,20 @@ async function main(): Promise<void> {
       };
     }
     if (v && !v.approve && v.source === 'judgment') {
+      const concentrated = raters <= 1;
       return {
         id,
-        headline: 'refused, despite having the best numbers here',
-        what: `${feedback.length} ratings, all from the same client`,
+        // Only one agent can have had the best numbers. Giving every judgment
+        // refusal that headline pointed the reader at whichever sorted first.
+        headline:
+          id === bestNumbersRefused
+            ? 'refused, despite having the best numbers here'
+            : 'refused on judgment, with a usable but thin record',
+        what: concentrated
+          ? feedback.length === 1
+            ? '1 rating, from a single client'
+            : `${feedback.length} ratings, all from the same client`
+          : `${feedback.length} ratings from ${raters} clients`,
         ending: '**Refused.** No credit offered',
       };
     }
@@ -322,6 +380,17 @@ async function main(): Promise<void> {
         headline: 'refused before the underwriter was called',
         what: 'no usable history',
         ending: '**Refused.** Declined by rule, no judgment needed',
+      };
+    }
+    // An agent with a record but no verdict has applied and is waiting, which is
+    // a different thing from one that only ever rated others. Calling both
+    // "a client" mislabelled the outside applicant as a bystander.
+    if (feedback.length > 0) {
+      return {
+        id,
+        headline: 'joined on its own, and is building a record',
+        what: `${feedback.length} rating${feedback.length === 1 ? '' : 's'} from ${raters} client${raters === 1 ? '' : 's'}`,
+        ending: 'Proven, not yet underwritten',
       };
     }
     return {
@@ -677,6 +746,12 @@ async function main(): Promise<void> {
 
   writeFileSync('EVIDENCE.md', out.join('\n'));
   console.log(`\nEVIDENCE.md written: ${proofs.length} proofs, ${creditEvents.length} credit events, ${poolEvents.length} pool events.`);
+  if (unresolved > 0) {
+    console.warn(
+      `\n  WARNING: ${unresolved} proof(s) have no Ethereum link and will render as dashes,\n` +
+        `  which reads as missing evidence. Re-run before publishing.`
+    );
+  }
 }
 
 main().catch((error) => {

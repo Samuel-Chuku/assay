@@ -5,7 +5,7 @@ history, that another faked its ratings, that a third sold its identity
 after borrowing. Every one of those claims is a transaction on a public
 chain. This file lists them so you can check any of it yourself.
 
-Generated 2026-09-10 by `pnpm evidence:export`, which reads both chains
+Generated 2026-09-11 by `pnpm evidence:export`, which reads both chains
 live. The hashes below were not typed in.
 
 ## How to read this
@@ -29,10 +29,11 @@ Five agents appear here. This is what happened to each of them.
 | Agent | What it is | How it ended |
 | --- | --- | --- |
 | [10128](#agent-10128) | the first line Assay ever opened | **Repaid.** Principal and interest returned, collateral released |
-| [10155](#agent-10155) | 3 ratings from 3 different clients | **Active.** Drew against its line and still owes it |
+| [10155](#agent-10155) | 5 ratings from 3 different clients | **Active.** Drew against its line and still owes it |
 | [10156](#agent-10156) | 5 ratings, all from the same client | **Refused.** No credit offered |
 | [10157](#agent-10157) | registered so it could rate other agents | Never applied for credit |
 | [10195](#agent-10195) | 3 ratings from 3 different clients | **Frozen.** Its identity was sold after it borrowed |
+| [10230](#agent-10230) | 1 rating, from a single client | **Refused.** No credit offered |
 
 If you only read one part of this file, read agent 10156. It has the best
 raw numbers of anything here and it was turned down, which is the whole
@@ -87,13 +88,15 @@ quietly rewritten afterwards.
 
 [`0x4442c631…`](https://sepolia.etherscan.io/tx/0x4442c6311a850e65d797c8ef9f47b59e368148a0b6b6c62c8ce6a0c3ce6e19f7) on Ethereum, proven on Creditcoin at [`0xa18e8d3d…`](https://creditcoin-testnet.blockscout.com/tx/0xa18e8d3ddff5eddb794aa590d95037e64a9778bacfa672edbdc3d214e7e56932).
 
-**2. It was rated 3 times by 3 clients.**
+**2. It was rated 5 times by 3 clients.**
 
 | Score | From | On Ethereum | Proven on Creditcoin |
 | --- | --- | --- | --- |
 | 0.88 | `0x4B11611C…` | [`0xcb8d6687…`](https://sepolia.etherscan.io/tx/0xcb8d6687ea23553653206ac259afc7b38e9c4a432e1fb047e14dffd7c1f1430b) | [`0x404fb484…`](https://creditcoin-testnet.blockscout.com/tx/0x404fb484d0b486f37a558325522b1064fcd52f58cd6b4d1543cd6159734c989d) |
 | 0.92 | `0xa0f67760…` | [`0xcc4e0807…`](https://sepolia.etherscan.io/tx/0xcc4e08070a9a52255652c05b4c65384384cd00206c6de6d1cd5bbf8132a102cd) | [`0x504afd06…`](https://creditcoin-testnet.blockscout.com/tx/0x504afd064835b17929e50b8ec6e11aa2350489fead25bc3fd659c84b81f04230) |
 | 0.95 | `0x348e0864…` | [`0x7b223603…`](https://sepolia.etherscan.io/tx/0x7b2236038e267010e0f10a2df406b91ff4682ac60cd230224b22166878287f7f) | [`0x10f03f00…`](https://creditcoin-testnet.blockscout.com/tx/0x10f03f0001b676e77e25e437de2bc14b3907c616c0b9f21e8529b366d33cacf7) |
+| 0.94 | `0x348e0864…` | [`0xddac85c1…`](https://sepolia.etherscan.io/tx/0xddac85c1af083dada783e90985b7354f4a6d222ad6d284f111ca05ce99085bf4) | [`0xeb969884…`](https://creditcoin-testnet.blockscout.com/tx/0xeb969884b6d990d7e56adc00dca59e671a2994cbd7e488279a6c39561a067947) |
+| 0.94 | `0x348e0864…` | [`0x6ef4b57a…`](https://sepolia.etherscan.io/tx/0x6ef4b57a3dc859ff89a386299157b1ee5f8b33397b5cf6d48697dccc3f8396da) | [`0xf7566b34…`](https://creditcoin-testnet.blockscout.com/tx/0xf7566b34d71f918bf9d0a429bfbaab39a08b2c3f0c1c326a5e2298f303d288ef) |
 
 **3. The underwriter approved it.** A judgment, formed by reading the proven facts above and nothing else.
 
@@ -110,11 +113,15 @@ quietly rewritten afterwards.
 
 Offered [`0x3722e6ab…`](https://creditcoin-testnet.blockscout.com/tx/0x3722e6ab2111a8f395720d43df536f25401a22de86caace42b1d3eba8f71f341), accepted [`0x837cc5eb…`](https://creditcoin-testnet.blockscout.com/tx/0x837cc5eb264c8fd6ee8cc495962d6e3e0763573319d7760edfdb3571a436547d).
 
-**5. It drew on the line.** 1.00 tCTC at [`0x29eee0fb…`](https://creditcoin-testnet.blockscout.com/tx/0x29eee0fb25e3f1f02e132e9afe3e44a5420799b32c6c881b630d5568c9460011).
+**5. It drew on the line.** 1.00 tCTC at [`0x29eee0fb…`](https://creditcoin-testnet.blockscout.com/tx/0x29eee0fb25e3f1f02e132e9afe3e44a5420799b32c6c881b630d5568c9460011), 0.96 tCTC at [`0xa8706f73…`](https://creditcoin-testnet.blockscout.com/tx/0xa8706f7360b3b60b07a3dcf1052e0612e9908da0656cf63cc10e43abe29720e6).
 
 That money came out of the lending pool, which real deposits funded.
 
-**Where it stands now:** Active, 1.00 tCTC outstanding of a 2.00 tCTC limit.
+**6. It repaid.** 0.30 tCTC of principal plus 0.00 tCTC of interest.
+
+[`0x3c88801c…`](https://creditcoin-testnet.blockscout.com/tx/0x3c88801c317667890bf9d727f87a7d6b684af55fb974b2d777ab91790dc51c95).
+
+**Where it stands now:** Active, 1.66 tCTC outstanding of a 2.00 tCTC limit.
 
 ### Agent 10156
 
@@ -158,7 +165,7 @@ quietly rewritten afterwards.
 
 [`0xddf1a370…`](https://sepolia.etherscan.io/tx/0xddf1a3705d5c2c6f53495bd660001371287e2c6f906ebafdd7b23e989dc4b35b) on Ethereum, proven on Creditcoin at [`0x1716b85e…`](https://creditcoin-testnet.blockscout.com/tx/0x1716b85e388340d778567f00e7543f97d63e87d389aec713710c5d16d03b4e0a).
 
-**2. It rated other agents 2 times.** Agents 10155 and 10195.
+**2. It rated other agents 4 times.** Agents 10155 and 10195.
 
 This is why it appears at all. Feedback is permissionless, so a rating is
 only worth as much as whoever left it: one from a party holding its own
@@ -219,6 +226,35 @@ quietly rewritten afterwards.
 
 **Where it stands now:** Frozen, 1.00 tCTC outstanding of a 2.00 tCTC limit.
 
+### Agent 10230
+
+*Refused on judgment, with a usable but thin record.*
+
+**1. It registered an identity on Ethereum.** Owned by `0xf48D457C0272a1b8Cd055486C08d2C68195F504E`.
+
+[`0x060470c6…`](https://sepolia.etherscan.io/tx/0x060470c6046af0602cd51afd7a005dbc1522f2fe5e75f8719afd8be11f4a55e1) on Ethereum, proven on Creditcoin at [`0xdba03ee2…`](https://creditcoin-testnet.blockscout.com/tx/0xdba03ee2cc0734769b685c6b6d3c462d4f390d43e9173fa3e24eb0dfc38ee259).
+
+**2. It was rated 1 time by 1 client.**
+
+Every rating came from the same address. Anyone can leave feedback on any
+agent, so a run of high scores from one source is close to worthless, and
+the underwriter is expected to notice.
+
+| Score | From | On Ethereum | Proven on Creditcoin |
+| --- | --- | --- | --- |
+| 80.00 | `0xd40D8538…` | [`0x5a39efd1…`](https://sepolia.etherscan.io/tx/0x5a39efd196e2a2aff58a544a508c8e0f75851efe8b8f8fb4385bcffae24e12a4) | [`0xa43a5155…`](https://creditcoin-testnet.blockscout.com/tx/0xa43a5155234dbcf971519d4e4c76d3aed37a006430d6c991a1082b2018667151) |
+
+**3. The underwriter turned it down.** A judgment, formed by reading the proven facts above and nothing else.
+
+> Agent 10230 is essentially a blank slate wearing a single favorable data
+> point. The identity was proven only 0.2 days ago, has no payment wallet
+> set, and its entire reputation consists of one feedback entry (value
+> 80.00) from one counterparty, 0xd40D8538ad075740A88852679Af17110Ff573c1a.
+
+Its full reasoning is in the appendix. That text is hashed as
+`0x3ce48c8e52…` and bound into the decision on chain, so it cannot be
+quietly rewritten afterwards.
+
 ### Why two agents show both a line and a refusal
 
 Agents 10128 and 10195 hold a credit line on chain and a refusal from the
@@ -233,7 +269,7 @@ fresh evidence. Neither would be approved again today.
 ## The lending pool
 
 Lenders put real money in and the agents borrowed it. The pool currently
-holds 5.05 tCTC against 5.0 shares, with 2.00 tCTC out on loan. It is
+holds 5.05 tCTC against 5.0 shares, with 2.66 tCTC out on loan. It is
 worth more than was deposited because a borrower repaid with interest.
 
 | What happened | Detail | Transaction |
@@ -244,6 +280,8 @@ worth more than was deposited because a borrower repaid with interest.
 | An agent repaid | 1.00 tCTC principal, 0.05 tCTC interest | [`0x974a761d…`](https://creditcoin-testnet.blockscout.com/tx/0x974a761dd1b3f076bb0b9d7fc126f80f8385dad42928c5e81097601cda46ea83) |
 | Lent to an agent | 1.00 tCTC to `0x491b8312…` | [`0x29eee0fb…`](https://creditcoin-testnet.blockscout.com/tx/0x29eee0fb25e3f1f02e132e9afe3e44a5420799b32c6c881b630d5568c9460011) |
 | Lent to an agent | 1.00 tCTC to `0xcb51778C…` | [`0x6dcc6a64…`](https://creditcoin-testnet.blockscout.com/tx/0x6dcc6a6470ee97dffb7a198b33fb798bef3bc474b4dfd4b1ed9792a74a133a5f) |
+| An agent repaid | 0.30 tCTC principal, 0.00 tCTC interest | [`0x3c88801c…`](https://creditcoin-testnet.blockscout.com/tx/0x3c88801c317667890bf9d727f87a7d6b684af55fb974b2d777ab91790dc51c95) |
+| Lent to an agent | 0.96 tCTC to `0x491b8312…` | [`0xa8706f73…`](https://creditcoin-testnet.blockscout.com/tx/0xa8706f7360b3b60b07a3dcf1052e0612e9908da0656cf63cc10e43abe29720e6) |
 
 ## Appendix
 
@@ -328,9 +366,39 @@ text the contract was given.
 > nothing about the current one. This is not an assessment of the agent's
 > quality: the evidence itself is unusable, so no assessment is possible.
 
+**Agent 10230, refused** (`0x3ce48c8e524d12c5d18e27b068650b033f66ed1efdce26e6cd28c4c7a1127c4e`)
+
+> Agent 10230 is essentially a blank slate wearing a single favorable data
+> point. The identity was proven only 0.2 days ago, has no payment wallet
+> set, and its entire reputation consists of one feedback entry (value
+> 80.00) from one counterparty, 0xd40D8538ad075740A88852679Af17110Ff573c1a.
+> That counterparty holds no proven ERC-8004 identity of its own, meaning it
+> has staked nothing to write that rating and could have been funded by the
+> same operator that owns agent 10230 to manufacture a first entry at
+> negligible cost. There is no breadth (1 of 1 distinct counterparties), no
+> independent standing behind the rater, no time spread (all evidence is 0.2
+> days old, i.e. a single burst), and no volume to weigh against the
+> identity's youth. This is close to the canonical fabricated-record shape
+> the underwriting framework warns against: a clean-looking number from a
+> single, unstaked counterparty on a brand-new identity. An 80/100 mean from
+> one anonymous-weight rater tells us essentially nothing about how this
+> agent performs across a market, and there is no history at all of
+> completed work volume, dispute handling, or counterparty diversity to
+> anchor a credit assessment. Absence of a payment wallet is itself notable:
+> draws would have nowhere proven to settle, adding operational risk on top
+> of evidentiary risk. Given all this, extending any credit line would be
+> pricing money against a story rather than a track record. What would
+> change my mind: multiple entries from several distinct counterparties,
+> especially any that themselves hold proven ERC-8004 identities; evidence
+> spread over meaningfully more time than a few hours; a proven payment
+> wallet with a stable history; and a mean-reverting or at least plausible
+> distribution of feedback values rather than a single top-tier score from
+> an interested party. Until then, refusal is the correct call, not merely a
+> cautious one.
+
 ### Every proven fact
 
-All 17 of them, newest last. The final column is measured from the two
+All 21 of them, newest last. The final column is measured from the two
 block timestamps rather than asserted: it is the gap between an event
 happening on Ethereum and its proof landing on Creditcoin. Rows proven as
 soon as they could be sit at 8 to 9 minutes, which is the attestation
@@ -356,6 +424,10 @@ an already-attested block proves immediately however old it is.
 | `NewFeedback` | 10195 | 0.93 from `0xa0f67760…`, entry 1 | [`0x50d39a63…`](https://sepolia.etherscan.io/tx/0x50d39a630353e441696364b22a88c61d2adf43462cb5c8b73afffe702abd84ec) | [`0x2eb0e910…`](https://creditcoin-testnet.blockscout.com/tx/0x2eb0e91019fabc8988adb8242f87098e08005988e2283ee9d2fac461ef9f20c0) | +8m39s |
 | `NewFeedback` | 10195 | 0.91 from `0x348e0864…`, entry 1 | [`0xa83b4324…`](https://sepolia.etherscan.io/tx/0xa83b43243cdf677f6a5c91dde9115fa7b93870f8d97146f8fd4db25e61c01ba9) | [`0xba1f28cd…`](https://creditcoin-testnet.blockscout.com/tx/0xba1f28cde098b42a55669aa9a74a630e2817af7bbfe838abc63474ee392e5065) | +8m42s |
 | `Transfer` | 10195 | `0xA4bBeB84…` to `0x348e0864…`, ownerChanges now 1 | [`0xba26cbfe…`](https://sepolia.etherscan.io/tx/0xba26cbfed032d705cf43adcbe9bf112fc863190042f71813b7f596011c757a90) | [`0x1458f5ba…`](https://creditcoin-testnet.blockscout.com/tx/0x1458f5ba92b15d54cab8ca7322e797ef9cb73f397344f05e015a06a8f632c019) | +8m21s |
+| `NewFeedback` | 10155 | 0.94 from `0x348e0864…`, entry 2 | [`0xddac85c1…`](https://sepolia.etherscan.io/tx/0xddac85c1af083dada783e90985b7354f4a6d222ad6d284f111ca05ce99085bf4) | [`0xeb969884…`](https://creditcoin-testnet.blockscout.com/tx/0xeb969884b6d990d7e56adc00dca59e671a2994cbd7e488279a6c39561a067947) | +8m42s |
+| `NewFeedback` | 10155 | 0.94 from `0x348e0864…`, entry 3 | [`0x6ef4b57a…`](https://sepolia.etherscan.io/tx/0x6ef4b57a3dc859ff89a386299157b1ee5f8b33397b5cf6d48697dccc3f8396da) | [`0xf7566b34…`](https://creditcoin-testnet.blockscout.com/tx/0xf7566b34d71f918bf9d0a429bfbaab39a08b2c3f0c1c326a5e2298f303d288ef) | +8m45s |
+| `Registered` | 10230 | owner `0xf48D457C0272a1b8Cd055486C08d2C68195F504E` | [`0x060470c6…`](https://sepolia.etherscan.io/tx/0x060470c6046af0602cd51afd7a005dbc1522f2fe5e75f8719afd8be11f4a55e1) | [`0xdba03ee2…`](https://creditcoin-testnet.blockscout.com/tx/0xdba03ee2cc0734769b685c6b6d3c462d4f390d43e9173fa3e24eb0dfc38ee259) | +7m24s |
+| `NewFeedback` | 10230 | 80.00 from `0xd40D8538…`, entry 1 | [`0x5a39efd1…`](https://sepolia.etherscan.io/tx/0x5a39efd196e2a2aff58a544a508c8e0f75851efe8b8f8fb4385bcffae24e12a4) | [`0xa43a5155…`](https://creditcoin-testnet.blockscout.com/tx/0xa43a5155234dbcf971519d4e4c76d3aed37a006430d6c991a1082b2018667151) | +16m06s |
 
 ### Every credit line transaction
 
@@ -374,6 +446,8 @@ an already-attested block proves immediately however old it is.
 | `LineAccepted` | 10195 | collateral posted 1.20 tCTC | [`0xbfa44a9e…`](https://creditcoin-testnet.blockscout.com/tx/0xbfa44a9eb0bdbb52a97625ca0838f2e6319f03c3a96c890839499970b11999d7) |
 | `Drawn` | 10195 | drew 1.00 tCTC | [`0x6dcc6a64…`](https://creditcoin-testnet.blockscout.com/tx/0x6dcc6a6470ee97dffb7a198b33fb798bef3bc474b4dfd4b1ed9792a74a133a5f) |
 | `LineFrozen` | 10195 | **IdentityTransferred** | [`0x7d3a1228…`](https://creditcoin-testnet.blockscout.com/tx/0x7d3a1228e3a67e7e26a40a1a5813986e218065a4fad5d985c22cfe49273efd49) |
+| `RepaidLine` | 10155 | principal 0.30 tCTC, interest 0.00 tCTC | [`0x3c88801c…`](https://creditcoin-testnet.blockscout.com/tx/0x3c88801c317667890bf9d727f87a7d6b684af55fb974b2d777ab91790dc51c95) |
+| `Drawn` | 10155 | drew 0.96 tCTC | [`0xa8706f73…`](https://creditcoin-testnet.blockscout.com/tx/0xa8706f7360b3b60b07a3dcf1052e0612e9908da0656cf63cc10e43abe29720e6) |
 
 ### Contracts
 

@@ -97,11 +97,22 @@ function ChainHeights({ status }: { status: ChainStatus | null }) {
 
   return (
     <div className="as-menubar-status as-num" aria-live="polite">
-      <span>CC3 {status.creditcoinHeight}</span>
+      <span title="Creditcoin block height">
+        <span className="as-chain-tag">CC3</span> <span className="as-block-hash">#</span>
+        {status.creditcoinHeight}
+      </span>
       <span className="as-sep" aria-hidden="true">
         ·
       </span>
-      <span>SEP {status.sepoliaAttestedHeight}</span>
+      {/*
+        Spelled out, and prefixed with a #. Abbreviated to SEP it read as a
+        September date rather than a Sepolia block height, which is how at
+        least two readers first parsed it.
+      */}
+      <span title="Latest Sepolia block attested by the Attestcoin network">
+        <span className="as-chain-tag">SEPOLIA</span> <span className="as-block-hash">#</span>
+        {status.sepoliaAttestedHeight}
+      </span>
       <span
         className={current ? 'as-bolt-current' : 'as-bolt-behind'}
         title={

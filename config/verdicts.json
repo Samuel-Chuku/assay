@@ -81,5 +81,28 @@
     "reasoningHash": "0xd911ca0885c68eb4f9fa65edf31d730ac7dda7d006a95bf9f9203c91d9dfdcbe",
     "source": "envelope",
     "adjustments": []
+  },
+  {
+    "agentId": 10230,
+    "approve": false,
+    "credit_limit": "0",
+    "collateral_ratio": 0,
+    "rate_bps": 0,
+    "confidence": 0.92,
+    "reasoning": "Agent 10230 is essentially a blank slate wearing a single favorable data point. The identity was proven only 0.2 days ago, has no payment wallet set, and its entire reputation consists of one feedback entry (value 80.00) from one counterparty, 0xd40D8538ad075740A88852679Af17110Ff573c1a. That counterparty holds no proven ERC-8004 identity of its own, meaning it has staked nothing to write that rating and could have been funded by the same operator that owns agent 10230 to manufacture a first entry at negligible cost. There is no breadth (1 of 1 distinct counterparties), no independent standing behind the rater, no time spread (all evidence is 0.2 days old, i.e. a single burst), and no volume to weigh against the identity's youth. This is close to the canonical fabricated-record shape the underwriting framework warns against: a clean-looking number from a single, unstaked counterparty on a brand-new identity. An 80/100 mean from one anonymous-weight rater tells us essentially nothing about how this agent performs across a market, and there is no history at all of completed work volume, dispute handling, or counterparty diversity to anchor a credit assessment. Absence of a payment wallet is itself notable: draws would have nowhere proven to settle, adding operational risk on top of evidentiary risk. Given all this, extending any credit line would be pricing money against a story rather than a track record. What would change my mind: multiple entries from several distinct counterparties, especially any that themselves hold proven ERC-8004 identities; evidence spread over meaningfully more time than a few hours; a proven payment wallet with a stable history; and a mean-reverting or at least plausible distribution of feedback values rather than a single top-tier score from an interested party. Until then, refusal is the correct call, not merely a cautious one.",
+    "evidence_used": [
+      "Identity proven for 0.2 days; newest evidence 0.2 days old",
+      "Payment wallet not set",
+      "1 total reputation entry, 1 distinct counterparty, largest single share 100%",
+      "0 of 1 counterparties hold a proven ERC-8004 identity",
+      "100% of entries come from counterparties with no proven identity",
+      "Single entry value 80.00 from 0xd40D8538ad075740A88852679Af17110Ff573c1a",
+      "0 identity transfers, 0 payment wallet changes"
+    ],
+    "decidedAt": "2026-09-11T15:57:44.447Z",
+    "model": "anthropic/claude-sonnet-5",
+    "reasoningHash": "0x3ce48c8e524d12c5d18e27b068650b033f66ed1efdce26e6cd28c4c7a1127c4e",
+    "source": "judgment",
+    "adjustments": []
   }
 ]

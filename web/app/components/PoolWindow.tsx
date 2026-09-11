@@ -8,18 +8,21 @@ import { Window } from './Window';
  * two-sided market rather than a faucet, so correctness matters more than
  * presentation.
  */
+/** Two decimals, matching the credit line. */
+const amount = (v: string | number) => Number(v).toFixed(2);
+
 export function PoolWindow({ pool, id = 'pool', className }: { pool: Pool; id?: string; className?: string }) {
   return (
     <Window title="Lending pool" id={id} className={className}>
       <dl className="as-fields">
         <dt className="as-label">Total deposited</dt>
-        <dd className="as-num">{pool.totalAssets} tCTC</dd>
+        <dd className="as-num">{amount(pool.totalAssets)} tCTC</dd>
 
         <dt className="as-label">Out on loan</dt>
-        <dd className="as-num">{pool.totalDeployed} tCTC</dd>
+        <dd className="as-num">{amount(pool.totalDeployed)} tCTC</dd>
 
         <dt className="as-label">Liquid</dt>
-        <dd className="as-num">{pool.liquid} tCTC</dd>
+        <dd className="as-num">{amount(pool.liquid)} tCTC</dd>
       </dl>
 
       <Meter

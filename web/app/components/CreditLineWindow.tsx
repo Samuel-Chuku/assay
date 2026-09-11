@@ -30,6 +30,9 @@ export function CreditLineWindow({ agent, id = 'line', className }: { agent: Age
 
   const frozen = line.state === 'Frozen' || line.pendingFreezeReason !== 'NotFrozen';
   const limit = Number(line.limit);
+  /** Two decimals everywhere. formatEther returns full precision strings. */
+  const amount = (v: string | number) => Number(v).toFixed(2);
+
   const drawn = Number(line.principalOutstanding);
   const available = Math.max(0, limit - Number(line.totalDrawn));
 
@@ -59,7 +62,9 @@ export function CreditLineWindow({ agent, id = 'line', className }: { agent: Age
       <div className="as-amounts">
         <div>
           <span className="as-label">Drawn</span>
-          <span className="as-amount as-num">{line.principalOutstanding}</span>
+          {/* Formatted like every other figure. Raw, it rendered as
+              1.6603665515, which is precision nobody asked for. */}
+          <span className="as-amount as-num">{drawn.toFixed(2)}</span>
           <span className="as-label"> tCTC</span>
         </div>
         <div>
@@ -73,18 +78,18 @@ export function CreditLineWindow({ agent, id = 'line', className }: { agent: Age
         label="drawn"
         kind="drawn"
         fraction={limit === 0 ? 0 : drawn / limit}
-        value={`${line.principalOutstanding} / ${line.limit}`}
+        value={`${amount(line.principalOutstanding)} / ${amount(line.limit)}`}
       />
 
       <dl className="as-fields">
         <dt className="as-label">Limit</dt>
-        <dd className="as-num">{line.limit} tCTC</dd>
+        <dd className="as-num">{amount(line.limit)} tCTC</dd>
 
         <dt className="as-label">Collateral posted</dt>
-        <dd className="as-num">{line.collateralPosted} tCTC</dd>
+        <dd className="as-num">{amount(line.collateralPosted)} tCTC</dd>
 
         <dt className="as-label">Interest owed</dt>
-        <dd className="as-num">{line.interestOwed} tCTC</dd>
+        <dd className="as-num">{amount(line.interestOwed)} tCTC</dd>
 
         <dt className="as-label">Rate</dt>
         <dd className="as-num">{line.interestBps} bps</dd>

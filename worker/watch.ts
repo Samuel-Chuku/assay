@@ -113,12 +113,14 @@ async function trackedAgents(cc: ethers.JsonRpcProvider, state: State): Promise<
   // bounded. A cold start walks the history in chunks rather than one query.
   for (let start = from; start <= head; start += WATCHER.creditcoinScanWindowBlocks) {
     const end = Math.min(start + WATCHER.creditcoinScanWindowBlocks - 1, head);
-    const logs = await cc.getLogs({
-      address: DEPLOYMENTS.assayOracle,
-      fromBlock: start,
-      toBlock: end,
-      topics: [oracle.interface.getEvent('AgentProven')!.topicHash],
-    });
+    const logs = await resilient(`agent scan ${start}-${end}`, () =>
+      cc.getLogs({
+        address: DEPLOYMENTS.assayOracle,
+        fromBlock: start,
+        toBlock: end,
+        topics: [oracle.interface.getEvent('AgentProven')!.topicHash],
+      })
+    );
     for (const entry of logs) {
       const parsed = oracle.interface.parseLog({ topics: [...entry.topics], data: entry.data });
       if (parsed) ids.add(Number(parsed.args.agentId));
@@ -147,19 +149,54 @@ function classify(log: ethers.Log): { action: ActionName; agentId: number } | nu
   return null;
 }
 
+/**
+ * Retries the transient failures these endpoints actually produce.
+ *
+ * A rate limit or a momentary timeout is not a reason to abandon a whole pass
+ * and back off for two minutes: the request simply needs asking again. Anything
+ * that is not recognisably transient is rethrown immediately, because retrying
+ * a genuine error just delays finding out about it.
+ */
+async function resilient<T>(label: string, run: () => Promise<T>): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await run();
+    } catch (error) {
+      last = error;
+      const message = (error as Error).message ?? '';
+      const transient =
+        message.includes('-32005') || // rate limited
+        message.includes('Too Many Requests') ||
+        message.includes('timeout') ||
+        message.includes('missing response') ||
+        message.includes('SERVER_ERROR');
+      if (!transient) throw error;
+      if (attempt < 2) {
+        const wait = 2_000 * (attempt + 1);
+        log(`  ${label} was throttled; retrying in ${wait / 1000}s`);
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  }
+  throw last;
+}
+
 async function scan(sep: ethers.JsonRpcProvider, state: State, tracked: Set<number>): Promise<void> {
-  const head = await sep.getBlockNumber();
+  const head = await resilient('head read', () => sep.getBlockNumber());
   const from = state.lastScannedBlock === 0 ? head - WATCHER.coldStartBlocks : state.lastScannedBlock + 1;
   if (from > head) return;
 
   // One bounded window per pass: a huge range is what makes getLogs time out.
   const to = Math.min(head, from + WATCHER.scanWindowBlocks - 1);
 
-  const logs = await sep.getLogs({
-    address: [REGISTRIES.identity, REGISTRIES.reputation],
-    fromBlock: from,
-    toBlock: to,
-  });
+  const logs = await resilient(`Sepolia scan ${from}-${to}`, () =>
+    sep.getLogs({
+      address: [REGISTRIES.identity, REGISTRIES.reputation],
+      fromBlock: from,
+      toBlock: to,
+    })
+  );
 
   /**
    * One transaction, one action. This is not a preference, it is a hard limit.

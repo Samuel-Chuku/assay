@@ -43,7 +43,12 @@ export function Reasoning({ text, agentId }: { text: string; agentId: number }) 
             </span>
             {expanded ? 'Show less' : 'Read the full reasoning'}
           </button>
-          <button type="button" className="as-reasoning-toggle" onClick={() => setModal(true)}>
+          {/* Pushed to the far edge: side by side these read as one control. */}
+          <button
+            type="button"
+            className="as-reasoning-toggle is-secondary"
+            onClick={() => setModal(true)}
+          >
             Open in a window ↗
           </button>
         </p>
