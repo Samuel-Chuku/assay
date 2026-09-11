@@ -15,3 +15,6 @@ web/.claude/
 
 # watcher progress, machine-local
 worker/watch-state.json
+
+# personal notes
+personalNotes.md
