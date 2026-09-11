@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 
+import { getActivity, type Activity } from '@/lib/activity';
 import { getAgent, getAgentIds } from '@/lib/agents';
 import { getProvenFacts, type ProvenFact } from '@/lib/evidence';
+import { ActivityWindow } from '../../components/ActivityWindow';
 import { AgentCard } from '../../components/AgentCard';
 import { CreditLineWindow } from '../../components/CreditLineWindow';
 import { EvidenceWindow } from '../../components/EvidenceWindow';
@@ -39,6 +41,8 @@ export default async function AgentPage({ params }: { params: Promise<{ agentId:
   const agent = await getAgent(agentId).catch(() => null);
   if (!agent) notFound();
 
+  const activity: Activity[] = await getActivity(agentId).catch(() => []);
+
   let facts: ProvenFact[] = [];
   let error: string | undefined;
   try {
@@ -52,6 +56,7 @@ export default async function AgentPage({ params }: { params: Promise<{ agentId:
       <AgentCard agent={agent} className="as-w-identity" />
       <VerdictWindow agent={agent} className="as-w-verdict" />
       <CreditLineWindow agent={agent} className="as-w-lineinfo" />
+      <ActivityWindow activity={activity} className="as-w-activity" />
       <EvidenceWindow facts={facts} error={error} className="as-w-evidence" />
     </main>
   );

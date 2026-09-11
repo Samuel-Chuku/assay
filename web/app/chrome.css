@@ -917,7 +917,8 @@ a.as-button {
     grid-row: 2;
   }
 
-  .as-w-evidence {
+  .as-w-evidence,
+  .as-w-activity {
     grid-column: 1 / -1;
   }
 }
@@ -2021,4 +2022,73 @@ a.as-button {
 .as-sim-action.will-freeze .as-sim-chip {
   background: var(--as-frozen);
   color: #1A1A1A;
+}
+
+
+/* ============================================================
+   Agent activity
+   ============================================================ */
+
+.as-activity {
+  display: flex;
+  gap: var(--as-3);
+  padding: var(--as-3) var(--as-4);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-left-width: 5px;
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+}
+
+.as-activity.is-drawn { border-left-color: var(--as-caution); }
+.as-activity.is-repaid,
+.as-activity.is-closed { border-left-color: var(--as-settled); }
+.as-activity.is-frozen { border-left-color: var(--as-frozen); }
+.as-activity.is-offered,
+.as-activity.is-accepted { border-left-color: var(--as-ink-faint); }
+
+.as-activity-chip { width: 38px; height: 38px; }
+.as-activity.is-drawn .as-activity-chip { background: var(--as-caution); color: #1A1A1A; }
+.as-activity.is-repaid .as-activity-chip,
+.as-activity.is-closed .as-activity-chip { background: var(--as-settled); color: #1A1A1A; }
+.as-activity.is-frozen .as-activity-chip { background: var(--as-frozen); color: #1A1A1A; }
+
+.as-activity-body { min-width: 0; }
+
+.as-activity-label {
+  margin: 0 0 var(--as-1);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-activity-detail {
+  margin: 0 0 var(--as-2);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+.as-activity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--as-3);
+  margin: 0;
+  font-size: var(--as-size-label);
+  color: var(--as-ink-dim);
+}
+
+/* The whole point of the window: who was allowed to do this. */
+.as-activity-actor {
+  font-family: var(--as-chrome);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0 var(--as-2);
+  border-radius: var(--as-r-chip);
+  border: 1px solid var(--as-ink-faint);
+}
+
+.as-activity-actor.is-agent {
+  border-color: var(--as-ink);
+  color: var(--as-ink);
+  font-weight: 700;
 }
