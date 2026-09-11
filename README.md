@@ -21,6 +21,10 @@ lenders.
 cryptographically verified cross-chain evidence and defends a decision in
 writing, including refusing agents whose numbers look excellent.
 
+**Live:** [assay-credit.vercel.app](https://assay-credit.vercel.app). Every
+number on it is read from the two chains; nothing is a fixture. The simulator
+at `/simulator` runs the real rules in the browser, no wallet needed.
+
 ## What it does
 
 1. **Reads** an agent's identity and feedback from the two ERC-8004 registries on
