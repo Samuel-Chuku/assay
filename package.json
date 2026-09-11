@@ -19,7 +19,9 @@
     "line:open": "tsx scripts/open-line.ts",
     "watch": "tsx worker/watch.ts",
     "identity:sell": "tsx scripts/sell-identity.ts",
-    "evidence:export": "tsx scripts/export-evidence.ts"
+    "evidence:export": "tsx scripts/export-evidence.ts",
+    "borrow": "tsx worker/borrow.ts",
+    "rate": "tsx scripts/rate-agent.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",
