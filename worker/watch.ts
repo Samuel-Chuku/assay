@@ -158,8 +158,12 @@ function classify(log: ethers.Log): { action: ActionName; agentId: number } | nu
  * a genuine error just delays finding out about it.
  */
 async function resilient<T>(label: string, run: () => Promise<T>): Promise<T> {
+  // Four attempts, backing off 3s, 6s, 12s. A rate limit is measured over a
+  // window of seconds, so 2s then 4s was expiring inside the same window it was
+  // trying to wait out: three throttles in six seconds, then a failed pass.
+  const waits = [3_000, 6_000, 12_000];
   let last: unknown;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt <= waits.length; attempt++) {
     try {
       return await run();
     } catch (error) {
@@ -172,8 +176,8 @@ async function resilient<T>(label: string, run: () => Promise<T>): Promise<T> {
         message.includes('missing response') ||
         message.includes('SERVER_ERROR');
       if (!transient) throw error;
-      if (attempt < 2) {
-        const wait = 2_000 * (attempt + 1);
+      if (attempt < waits.length) {
+        const wait = waits[attempt];
         log(`  ${label} was throttled; retrying in ${wait / 1000}s`);
         await new Promise((r) => setTimeout(r, wait));
       }
