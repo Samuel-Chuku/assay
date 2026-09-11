@@ -107,12 +107,46 @@ body {
   font-size: var(--as-size-title);
 }
 
+/*
+ * Pills, not bare words. The bar previously gave no indication of where you
+ * were, which on a four-route site is the one thing a nav is for.
+ */
 .as-menubar-item {
   color: var(--as-ink);
   text-decoration: none;
-  padding: var(--as-1) var(--as-1);
-  border-radius: var(--as-r-chip);
-  transition: background var(--as-dur) var(--as-ease);
+  padding: var(--as-2) var(--as-4);
+  border: var(--as-bw) solid transparent;
+  border-radius: var(--as-r-control);
+  font-weight: 700;
+  white-space: nowrap;
+  transition:
+    background var(--as-dur) var(--as-ease),
+    border-color var(--as-dur) var(--as-ease),
+    box-shadow var(--as-dur) var(--as-ease),
+    transform var(--as-dur) var(--as-ease);
+}
+
+.as-menubar-item:hover {
+  background: var(--as-sunk);
+  border-color: var(--as-ink-faint);
+}
+
+/* The active pill carries the same chrome as a window: ink border, hard
+   shadow, no blur. It should read as part of the same object family. */
+.as-menubar-item.is-active {
+  background: var(--as-paper);
+  border-color: var(--as-ink);
+  box-shadow: var(--as-shadow-1);
+}
+
+.as-menubar-item.is-active:hover {
+  background: var(--as-paper);
+  border-color: var(--as-ink);
+}
+
+.as-menubar-item:active {
+  transform: translate(1px, 1px);
+  box-shadow: var(--as-shadow-pressed);
 }
 
 .as-menubar-item:hover {
@@ -232,14 +266,57 @@ body {
    status stays: it is the proof the system is live, and navigation is also
    reachable from the icon strip. Letting the bar overflow instead would widen
    the whole page and push every window off-screen. */
-@media (max-width: 560px) {
-  .as-menubar-item {
+/*
+ * On a narrow screen the bar becomes two rows rather than dropping its items.
+ * Hiding them left a phone with no navigation at all: the ▤ is a mark, not a
+ * menu button, so there was no way to reach any other page.
+ */
+@media (max-width: 760px) {
+  .as-menubar {
+    height: auto;
+    min-height: var(--as-menubar-h);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'right'
+      'items';
+    row-gap: var(--as-2);
+    padding: var(--as-2) var(--as-3);
+    align-content: center;
+  }
+
+  .as-menubar-right {
+    grid-area: right;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .as-menubar-items {
+    grid-area: items;
+    /* Four pills will not fit a 390px screen; swiping is better than hiding. */
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .as-menubar-items::-webkit-scrollbar {
     display: none;
+  }
+
+  /* The centred wordmark is redundant once the pills have their own row. */
+  .as-menubar-name {
+    display: none;
+  }
+
+  .as-menubar-item {
+    padding: var(--as-1) var(--as-3);
+    font-size: var(--as-size-label);
   }
 
   .as-menubar-status {
     font-size: var(--as-size-label);
     gap: var(--as-1);
+    min-width: 0;
   }
 
   .as-hatch-height {
@@ -630,6 +707,23 @@ body {
   flex-wrap: wrap;
 }
 
+/*
+ * The amount field gives way before the buttons do. At the larger type the
+ * fixed-width input pushed WITHDRAW onto a line of its own, which read as two
+ * unrelated controls.
+ */
+.as-actions-row .as-input {
+  flex: 1 1 7ch;
+  min-width: 6ch;
+}
+
+/* The two buttons wrap together or not at all. */
+.as-actions-pair {
+  display: flex;
+  gap: var(--as-2);
+  flex: 0 0 auto;
+}
+
 .as-walletbar {
   margin-bottom: var(--as-3);
 }
@@ -709,7 +803,9 @@ body {
 
 .as-hero-body {
   margin: 0 0 var(--as-3);
-  max-width: 52ch;
+  /* 52ch is right for the landing hero, which sits in a narrow column. In a
+     full-width window it left a dead gap down the right-hand side. */
+  max-width: 68ch;
   font-size: var(--as-size-data);
   line-height: var(--as-lh-data);
 }
@@ -783,10 +879,16 @@ a.as-button {
     grid-column: 1 / -1;
   }
 
+  /* Full width. Alone in column one it left the right half of the page empty
+     for the height of the whole window. */
   .as-w-limits {
+    grid-column: 1 / -1;
+  }
+
+  /* Sits beside the limits, which used to leave the right column empty for the
+     whole height of that window. */
+  .as-w-try {
     grid-column: 1;
-    margin-right: calc(var(--as-6) * -1);
-    z-index: 2;
   }
 
   .as-w-footer {
@@ -1123,4 +1225,351 @@ a.as-button {
 
 .as-prose-page a {
   color: var(--as-ink);
+}
+
+/* A real tamper warning, as opposed to the ordinary case of a re-judged agent. */
+.as-state-alarm {
+  border: var(--as-bw) solid var(--as-frozen);
+  border-radius: var(--as-r-control);
+  padding: var(--as-3);
+  background: color-mix(in srgb, var(--as-frozen) 22%, var(--as-surface));
+}
+
+/* ============================================================
+   Loading skeletons
+   ============================================================ */
+
+.as-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-3);
+  margin-top: var(--as-4);
+}
+
+.as-skeleton-bar {
+  display: block;
+  height: var(--as-lh-data);
+}
+
+/* ============================================================
+   Simulator
+   ============================================================ */
+
+.as-icon {
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+
+.as-sim-profiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--as-3);
+  margin-top: var(--as-4);
+}
+
+.as-sim-profile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-2);
+  text-align: left;
+  padding: var(--as-3) var(--as-4);
+  background: var(--as-surface);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-radius: var(--as-r-control);
+  cursor: pointer;
+  font: inherit;
+  color: var(--as-ink);
+  transition:
+    border-color var(--as-dur) var(--as-ease),
+    box-shadow var(--as-dur) var(--as-ease),
+    transform var(--as-dur) var(--as-ease);
+}
+
+.as-sim-profile:hover {
+  border-color: var(--as-ink);
+}
+
+.as-sim-profile.is-active {
+  border-color: var(--as-ink);
+  box-shadow: var(--as-shadow-2);
+}
+
+.as-sim-profile-name {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-sim-profile-blurb {
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+.as-sim-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--as-3);
+}
+
+.as-sim-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-2);
+  text-align: left;
+  padding: var(--as-3) var(--as-4);
+  background: var(--as-surface);
+  border: var(--as-bw) solid var(--as-ink);
+  border-radius: var(--as-r-control);
+  box-shadow: var(--as-shadow-1);
+  cursor: pointer;
+  font: inherit;
+  color: var(--as-ink);
+  transition:
+    box-shadow var(--as-dur) var(--as-ease),
+    transform var(--as-dur) var(--as-ease);
+}
+
+.as-sim-action:hover:not(:disabled) {
+  box-shadow: var(--as-shadow-2);
+  transform: translate(-1px, -1px);
+}
+
+.as-sim-action:active:not(:disabled) {
+  box-shadow: var(--as-shadow-pressed);
+  transform: translate(1px, 1px);
+}
+
+.as-sim-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.as-sim-action-head {
+  display: flex;
+  align-items: center;
+  gap: var(--as-2);
+}
+
+.as-sim-action-label {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-sim-action-promise {
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+.as-sim-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-3);
+}
+
+.as-sim-step {
+  display: flex;
+  gap: var(--as-3);
+  padding: var(--as-3) var(--as-4);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-left-width: 5px;
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+}
+
+.as-sim-step.is-good { border-left-color: var(--as-settled); }
+.as-sim-step.is-bad { border-left-color: var(--as-frozen); }
+.as-sim-step.is-neutral { border-left-color: var(--as-ink-faint); }
+
+.as-sim-step-icon {
+  padding-top: 2px;
+  color: var(--as-ink);
+}
+
+.as-sim-step-body {
+  min-width: 0;
+}
+
+.as-sim-step-title {
+  margin: 0 0 var(--as-1);
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-sim-step-summary {
+  margin: 0 0 var(--as-2);
+  font-size: var(--as-size-data);
+  line-height: var(--as-lh-data);
+}
+
+.as-sim-step-because {
+  margin: 0;
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+  color: var(--as-ink-dim);
+}
+
+.as-sim-step-rule {
+  margin: var(--as-2) 0 0;
+  font-size: var(--as-size-label);
+}
+
+.as-sim-step-rule code {
+  font-family: var(--as-data);
+  color: var(--as-ink-dim);
+}
+
+.as-rule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--as-4);
+  margin-bottom: var(--as-4);
+}
+
+.as-rule {
+  padding: var(--as-4);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+}
+
+.as-rule-icon { color: var(--as-ink); }
+
+.as-rule-name {
+  margin: var(--as-2) 0;
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-rule-when,
+.as-rule-then {
+  margin: 0 0 var(--as-2);
+  font-size: var(--as-size-body);
+  line-height: var(--as-lh-body);
+}
+
+/* State beside the log: the two things you read together while acting. */
+.as-sim-split {
+  display: grid;
+  gap: var(--as-5);
+  align-items: start;
+}
+
+@media (min-width: 1000px) {
+  .as-sim-split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+}
+
+
+/* The landing hero keeps the tighter measure its column was drawn for. */
+.as-w-hero .as-hero-body {
+  max-width: 52ch;
+}
+
+/* ============================================================
+   Landing: live outcomes
+   ============================================================ */
+
+.as-outcome-list {
+  list-style: none;
+  margin: var(--as-4) 0 0;
+  padding: 0;
+}
+
+.as-outcome {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr auto;
+  align-items: baseline;
+  gap: var(--as-4);
+  padding: var(--as-3) var(--as-2);
+  border-top: 1px solid var(--as-sunk);
+  text-decoration: none;
+  color: var(--as-ink);
+  transition: background var(--as-dur) var(--as-ease);
+}
+
+.as-outcome:hover {
+  background: var(--as-sunk);
+}
+
+.as-outcome-id {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-data);
+}
+
+.as-outcome-verdict {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.08em;
+}
+
+.as-outcome-verdict.is-yes { color: var(--as-ink); }
+.as-outcome-verdict.is-no { color: var(--as-ink-dim); }
+
+.as-outcome-line,
+.as-outcome-why {
+  font-size: var(--as-size-body);
+  color: var(--as-ink-dim);
+}
+
+@media (max-width: 720px) {
+  .as-outcome {
+    grid-template-columns: auto 1fr;
+    gap: var(--as-2);
+  }
+  .as-outcome-why { grid-column: 1 / -1; }
+}
+
+/* A primary action, for the one thing we most want tried. */
+.as-button-primary {
+  background: var(--as-ink);
+  color: var(--as-surface);
+  border-color: var(--as-ink);
+}
+
+.as-button-primary:hover {
+  background: var(--as-ink);
+  color: var(--as-surface);
+}
+
+/*
+ * The evidence list scrolls, and used to cut a card in half at the boundary,
+ * which read as a rendering fault rather than as more content below.
+ */
+.as-evidence-scroll {
+  position: relative;
+}
+
+.as-evidence-scroll::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 56px;
+  background: linear-gradient(to bottom, transparent, var(--as-surface));
+  pointer-events: none;
+}
+
+/*
+ * Below this the two block heights and the wallet button cannot both fit, and
+ * the numbers ran under the button. The heights are a liveness indicator, not
+ * something a phone visitor needs, so they yield.
+ */
+@media (max-width: 480px) {
+  .as-menubar-status,
+  .as-menubar-divider {
+    display: none;
+  }
 }

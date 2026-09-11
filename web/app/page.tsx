@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { getPool } from '@/lib/agents';
+import { getAgents, getPool, type Agent } from '@/lib/agents';
 import { getProvenFacts, type ProvenFact } from '@/lib/evidence';
 import { REGISTRIES } from '@assay/config/chains';
 import { DEPLOYMENTS } from '@assay/config/deployments';
@@ -31,8 +31,9 @@ const STEPS = [
 ];
 
 export default async function Page() {
-  const [pool, factsResult] = await Promise.all([
+  const [pool, agents_, factsResult] = await Promise.all([
     getPool().catch(() => null),
+    getAgents().catch(() => []),
     getProvenFacts().then(
       (facts) => ({ facts, error: undefined as string | undefined }),
       (cause: unknown) => ({
@@ -44,6 +45,19 @@ export default async function Page() {
 
   const { facts, error } = factsResult;
   const agents = new Set(facts.map((f) => f.agentId));
+
+  /**
+   * The landing page states four outcomes. Deriving them from live state rather
+   * than listing them in prose means the claim cannot quietly go stale, and a
+   * reader can click straight through to the evidence behind any row.
+   */
+  const agentRows = agents_.map((a) => ({
+    agentId: a.agentId,
+    approved: a.verdict?.approve ?? false,
+    verdictLabel: a.verdict ? (a.verdict.approve ? 'APPROVED' : 'DECLINED') : 'NOT UNDERWRITTEN',
+    lineLabel: a.line ? a.line.state : 'no line',
+    why: whyLine(a),
+  }));
 
   return (
     <main className="as-page as-landing">
@@ -62,14 +76,9 @@ export default async function Page() {
           <Link className="as-button" href="/app">
             OPEN THE APP
           </Link>
-          <a
-            className="as-button"
-            href="https://github.com/Samuel-Chuku"
-            target="_blank"
-            rel="noreferrer"
-          >
-            VIEW THE CODE ↗
-          </a>
+          <Link className="as-button as-button-primary" href="/simulator">
+            TRY THE SIMULATOR
+          </Link>
         </p>
       </Window>
 
@@ -97,6 +106,22 @@ export default async function Page() {
         </p>
       </Window>
 
+      <Window title="See it for yourself" id="try" className="as-w-try">
+        <p className="as-hero-body">
+          The interesting behaviour is what happens when something goes wrong: an agent builds a
+          record, borrows against it, then sells its identity to someone with no history at all.
+        </p>
+        <p className="as-hero-body">
+          The simulator runs the real rules, in the real order, with the same reason strings the
+          deployed system uses. No wallet, nothing spent.
+        </p>
+        <p className="as-hero-actions">
+          <Link className="as-button as-button-primary" href="/simulator">
+            RUN THE SIMULATOR
+          </Link>
+        </p>
+      </Window>
+
       <Window title="The problem" id="problem" className="as-w-problem">
         <p className="as-hero-body">
           Agents pay for inference, gas, and API calls before anyone pays them. When the balance hits
@@ -117,6 +142,40 @@ export default async function Page() {
       </div>
 
       <EvidenceWindow facts={facts} error={error} className="as-w-wide" />
+
+      <Window title="Every agent, and what happened to it" id="outcomes" className="as-w-wide">
+        <p className="as-hero-body">
+          Every row is live state read from Creditcoin, not a fixture. The verdict column is the
+          underwriter&rsquo;s current judgment; the line column is what the contract is actually
+          doing about it.
+        </p>
+        {agentRows.length === 0 ? (
+          <p className="as-state">
+            <strong>AGENTS UNAVAILABLE</strong> — Creditcoin did not answer while this page was
+            built. Nothing is shown rather than something unverified.
+          </p>
+        ) : (
+          <ul className="as-outcome-list">
+            {agentRows.map((a) => (
+              <li key={a.agentId}>
+                <Link className="as-outcome" href={`/app/${a.agentId}`}>
+                  <span className="as-outcome-id">#{a.agentId}</span>
+                  <span
+                    className={
+                      a.approved ? 'as-outcome-verdict is-yes' : 'as-outcome-verdict is-no'
+                    }
+                  >
+                    {a.verdictLabel}
+                  </span>
+                  <span className="as-outcome-line">{a.lineLabel}</span>
+                  <span className="as-outcome-why">{a.why}</span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Window>
 
       <Window title="What this cannot do" accent="frozen" id="limits" className="as-w-limits">
         <p className="as-hero-body">
@@ -155,6 +214,19 @@ export default async function Page() {
           <dt className="as-label">Lending pool</dt>
           <dd className="as-num">{truncate(DEPLOYMENTS.lendingPool)}</dd>
         </dl>
+        <p className="as-hero-actions">
+          <a
+            className="as-button"
+            href="https://github.com/Samuel-Chuku/assay"
+            target="_blank"
+            rel="noreferrer"
+          >
+            VIEW THE CODE ↗
+          </a>
+          <Link className="as-button" href="/how-it-works">
+            HOW IT WORKS
+          </Link>
+        </p>
         <p className="as-caption">
           The two registry addresses are rendered in proof blue because they are the trust anchor of
           the system: a fact is believed only if one of them emitted it. Built for BUIDL CTC 2026
@@ -163,4 +235,17 @@ export default async function Page() {
       </Window>
     </main>
   );
+}
+
+/** One line on why an agent ended where it did, from its own state. */
+function whyLine(a: Agent): string {
+  // Line state first: an agent that borrowed and repaid is described by that,
+  // not by whatever its evidence looks like now.
+  if (a.line?.state === 'Repaid') return 'borrowed and repaid in full';
+  if (a.ownerChanges > 0) return 'identity sold after underwriting';
+  if (a.walletChanges > 0) return 'payment wallet changed after underwriting';
+  if (a.feedbackCount === 0) return 'no proven record to read';
+  if (!a.verdict) return 'proven, but never applied for credit';
+  if (!a.verdict.approve) return 'usable evidence, declined on judgment';
+  return `${a.feedbackCount} proven facts, approved`;
 }

@@ -1,4 +1,5 @@
 import { ConnectButton } from './ConnectButton';
+import { MenuItems } from './MenuItems';
 import { ThemeToggle } from './ThemeToggle';
 
 /**
@@ -34,10 +35,15 @@ export type ChainStatus = {
 
 export type MenuItem = { label: string; href: string };
 
+/*
+ * Real routes only. Anchors used to sit in here alongside pages, which meant
+ * "Pool" (/app#pool) and "Agents" (/app) were the same destination as far as
+ * the active state was concerned, and both lit up at once.
+ */
 const DEFAULT_ITEMS: MenuItem[] = [
+  { label: 'Home', href: '/' },
   { label: 'Agents', href: '/app' },
-  { label: 'Evidence', href: '/#evidence' },
-  { label: 'Pool', href: '/app#pool' },
+  { label: 'Simulator', href: '/simulator' },
   { label: 'How it works', href: '/how-it-works' },
 ];
 
@@ -56,11 +62,7 @@ export function MenuBar({ name = 'ASSAY', items = DEFAULT_ITEMS, status = null }
         <span className="as-menubar-mark" aria-hidden="true">
           ▤
         </span>
-        {items.map((item) => (
-          <a key={item.href} className="as-menubar-item" href={item.href}>
-            {item.label}
-          </a>
-        ))}
+        <MenuItems items={items} />
       </div>
 
       <span className="as-menubar-name">{name}</span>

@@ -40,10 +40,12 @@ export function EvidenceWindow({
           survive source-chain reorganisation.
         </p>
       ) : (
+        <div className="as-evidence-scroll">
         <div className="as-evidence-rows">
           {facts.map((fact) => (
             <ProofRow key={`${fact.verificationTxHash}-${fact.queryId}`} fact={fact} />
           ))}
+        </div>
         </div>
       )}
 

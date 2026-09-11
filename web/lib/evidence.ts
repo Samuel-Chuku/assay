@@ -103,6 +103,63 @@ type Caches = {
   verificationBlocks: Map<number, Promise<ethers.Block | null>>;
 };
 
+/**
+ * Block headers, kept for the life of the process.
+ *
+ * A mined block's timestamp never changes, so re-reading one is pure waste.
+ * These were previously scoped to a single call, which meant every page render
+ * paid for the same headers again. A Sepolia header costs about 0.8s, and a
+ * render needs one per distinct source block.
+ *
+ * Bounded so a long-lived server cannot grow without limit.
+ */
+const BLOCK_CACHE_MAX = 500;
+const sourceBlockCache = new Map<number, Promise<ethers.Block | null>>();
+const verificationBlockCache = new Map<number, Promise<ethers.Block | null>>();
+
+function bounded<K, V>(map: Map<K, V>): Map<K, V> {
+  if (map.size > BLOCK_CACHE_MAX) {
+    for (const key of [...map.keys()].slice(0, map.size - BLOCK_CACHE_MAX)) map.delete(key);
+  }
+  return map;
+}
+
+/**
+ * The oracle's whole log history, memoised.
+ *
+ * This single `eth_getLogs` spans every block since the oracle was deployed and
+ * measured 3.8s, growing by roughly 4,000 blocks a day. It was the dominant
+ * cost of every page on the site, and three different pages each paid it
+ * separately. The logs only change when the watcher proves something, which is
+ * minutes apart at best, so a short window costs nothing in freshness.
+ */
+const LOGS_WINDOW_MS = 45_000;
+let logsCache: { at: number; logs: ethers.Log[] } | null = null;
+let logsInFlight: Promise<ethers.Log[]> | null = null;
+
+async function oracleLogs(cc: ethers.JsonRpcProvider, topics: string[]): Promise<ethers.Log[]> {
+  if (logsCache && Date.now() - logsCache.at < LOGS_WINDOW_MS) return logsCache.logs;
+
+  if (!logsInFlight) {
+    logsInFlight = retry('reading proven facts from Creditcoin', 3, () =>
+      cc.getLogs({
+        address: DEPLOYMENTS.assayOracle,
+        fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
+        toBlock: 'latest',
+        topics: [topics],
+      })
+    )
+      .then((logs) => {
+        logsCache = { at: Date.now(), logs };
+        return logs;
+      })
+      .finally(() => {
+        logsInFlight = null;
+      });
+  }
+  return logsInFlight;
+}
+
 type ResolvedSource = {
   sourceTxHash: string;
   sourceBlock: number;
@@ -110,7 +167,38 @@ type ResolvedSource = {
   delaySeconds: number | null;
 };
 
-async function resolveSource(
+/**
+ * Resolved sources, kept for the life of the process.
+ *
+ * A submission transaction always decodes to the same source transaction: the
+ * calldata is fixed once mined, and so is the Merkle proof it carries. The
+ * whole chain of calls behind it was being repeated on every render, which is
+ * four round trips per fact for an answer that cannot change.
+ */
+const sourceCache = new Map<string, Promise<ResolvedSource>>();
+
+function resolveSource(
+  log: OracleLog,
+  oracle: ethers.Contract,
+  cc: ethers.JsonRpcProvider,
+  sep: ethers.JsonRpcProvider,
+  prover: ethers.Contract,
+  caches: Caches
+): Promise<ResolvedSource> {
+  const key = `${log.transactionHash}:${log.index}`;
+  const hit = sourceCache.get(key);
+  if (hit) return hit;
+
+  const pending = resolveSourceUncached(log, oracle, cc, sep, prover, caches).catch((error) => {
+    // A failure must not be cached, or one bad minute poisons the page forever.
+    sourceCache.delete(key);
+    throw error;
+  });
+  sourceCache.set(key, pending);
+  return pending;
+}
+
+async function resolveSourceUncached(
   log: OracleLog,
   oracle: ethers.Contract,
   cc: ethers.JsonRpcProvider,
@@ -249,7 +337,19 @@ function short(address: string): string {
  * one link. The reference is explicit: no "proven but link pending". If both
  * links are not there, it does not get to look proven.
  */
-export async function getProvenFacts(limit = 20): Promise<ProvenFact[]> {
+export async function getProvenFacts(
+  limit = 20,
+  /**
+   * Resolve only one agent's facts.
+   *
+   * The agent id is already in the oracle log, so it is known before any source
+   * transaction is reconstructed. An agent page used to resolve every fact on
+   * the oracle and then throw away the ones belonging to other agents, which
+   * cost four chain calls apiece for nothing and was most of why clicking an
+   * agent felt slow.
+   */
+  onlyAgentId?: number
+): Promise<ProvenFact[]> {
   const cc = creditcoin();
   const sep = sepolia();
   const oracle = new ethers.Contract(DEPLOYMENTS.assayOracle, ASSAY_ORACLE_ABI, cc);
@@ -264,14 +364,7 @@ export async function getProvenFacts(limit = 20): Promise<ProvenFact[]> {
   const names = ['AgentProven', 'FeedbackProven', 'IdentityTransferProven', 'WalletChangeProven'];
   const topics = names.map((name) => oracle.interface.getEvent(name)!.topicHash);
 
-  const raw = await retry('reading proven facts from Creditcoin', 3, () =>
-    cc.getLogs({
-      address: DEPLOYMENTS.assayOracle,
-      fromBlock: ORACLE_DEPLOYED_AT_BLOCK,
-      toBlock: 'latest',
-      topics: [topics],
-    })
-  );
+  const raw = await oracleLogs(cc, topics);
 
   const logs = raw
     .map((log): OracleLog | null => {
@@ -286,10 +379,15 @@ export async function getProvenFacts(limit = 20): Promise<ProvenFact[]> {
       };
     })
     .filter((l): l is OracleLog => l !== null)
+    .filter((l) => onlyAgentId === undefined || Number(l.args.agentId) === onlyAgentId)
     .sort((a, b) => b.blockNumber - a.blockNumber || b.index - a.index)
     .slice(0, limit);
 
-  const caches: Caches = { sourceBlocks: new Map(), verificationBlocks: new Map() };
+  // Shared across renders: block timestamps are immutable.
+  const caches: Caches = {
+    sourceBlocks: bounded(sourceBlockCache),
+    verificationBlocks: bounded(verificationBlockCache),
+  };
 
   const settled = await mapWithConcurrency(
     logs,

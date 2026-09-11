@@ -68,8 +68,14 @@ export type Agent = {
   walletChanges: number;
   evidenceAgeBlocks: number;
   verdict: Verdict | null;
-  /** keccak256 of the shown reasoning matches the hash bound on chain. */
+  /** keccak256 of the shown reasoning matches the verdict's own hash. */
   reasoningVerified: boolean | null;
+  /**
+   * The displayed verdict is the one this line was opened against. False means
+   * the agent has been re-judged since, which is a normal thing to have
+   * happened and not a failure of any check.
+   */
+  boundToLine: boolean | null;
   line: CreditLine | null;
 };
 
@@ -255,11 +261,24 @@ export async function getAgent(agentId: number): Promise<Agent | null> {
   }
 
   /**
-   * Only claim verification when there is an on-chain hash to check against.
-   * A verdict with no line yet is unverified rather than verified-true.
+   * Two different questions, which an earlier version collapsed into one and
+   * got wrong.
+   *
+   * `reasoningVerified` asks whether the text shown is the text that was
+   * hashed. That is the tamper check, and it is the only one that can fail
+   * dishonestly: a substituted reasoning is caught here regardless of where the
+   * text came from.
+   *
+   * `boundToLine` asks whether the judgment on display is the same one this
+   * line was opened on. An agent is re-judged whenever its evidence moves, so a
+   * frozen agent legitimately shows a refusal formed *after* the line was
+   * offered against an earlier approval. Comparing that refusal to the offer's
+   * hash reported "does not match the chain" on a verdict that was perfectly
+   * authentic, which is an accusation of tampering where none happened.
    */
-  const reasoningVerified =
-    verdict && line ? ethers.id(verdict.reasoning) === line.reasoningHash : null;
+  const reasoningVerified = verdict ? ethers.id(verdict.reasoning) === verdict.reasoningHash : null;
+
+  const boundToLine = verdict && line ? verdict.reasoningHash === line.reasoningHash : null;
 
   return {
     agentId,
@@ -272,6 +291,7 @@ export async function getAgent(agentId: number): Promise<Agent | null> {
     evidenceAgeBlocks: head - Number(record.lastEvidenceBlock),
     verdict,
     reasoningVerified,
+    boundToLine,
     line,
   };
 }

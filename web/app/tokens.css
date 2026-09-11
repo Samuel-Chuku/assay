@@ -54,19 +54,26 @@
   --as-chrome: 'Space Mono', ui-monospace, monospace;
   --as-data:   'IBM Plex Mono', ui-monospace, monospace;
 
-  --as-size-title:   15px;  --as-lh-title:   20px;
-  --as-size-menu:    12px;  --as-lh-menu:    16px;
-  --as-size-heading: 18px;  --as-lh-heading: 24px;
-  --as-size-data-xl: 28px;  --as-lh-data-xl: 32px;
-  --as-size-data:    14px;  --as-lh-data:    20px;
-  --as-size-body:    13px;  --as-lh-body:    20px;
-  --as-size-label:   11px;  --as-lh-label:   16px;
+  /*
+   * Scaled up roughly 40% from the original reference sizes. The design was
+   * drawn tight, and at a normal viewing distance the body copy and data rows
+   * were genuinely hard to read. Labels move least: they are signposts, and
+   * scaling them with everything else would have them shouting over the values
+   * they label.
+   */
+  --as-size-title:   21px;  --as-lh-title:   28px;
+  --as-size-menu:    17px;  --as-lh-menu:    24px;
+  --as-size-heading: 25px;  --as-lh-heading: 34px;
+  --as-size-data-xl: 39px;  --as-lh-data-xl: 44px;
+  --as-size-data:    20px;  --as-lh-data:    30px;
+  --as-size-body:    18px;  --as-lh-body:    28px;
+  --as-size-label:   15px;  --as-lh-label:   22px;
 
   --as-track-label: 0.5px;
 
   /* ---- Window chrome geometry ----------------------------- */
   --as-titlebar-h: 32px;
-  --as-menubar-h:  36px;
+  --as-menubar-h:  64px;   /* two rows on narrow screens; see below */
   --as-dot:        10px;   /* the ○ ○ traffic lights */
 
   /* ---- Motion: instant or linear, never eased ------------- */
@@ -196,5 +203,16 @@ input[type='number'] {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+}
+
+/*
+ * The bar becomes two rows below 760px, so the space reserved for it has to
+ * grow with it. This lives here rather than in chrome.css because the bundler
+ * emits tokens.css last, and a :root override anywhere else loses to it.
+ */
+@media (max-width: 760px) {
+  :root {
+    --as-menubar-h: 104px;
   }
 }

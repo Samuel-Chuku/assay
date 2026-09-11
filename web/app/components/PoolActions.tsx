@@ -44,12 +44,14 @@ export function PoolActions() {
           onChange={(e) => setAmount(e.target.value)}
           inputMode="decimal"
         />
-        <Button onClick={() => void deposit()} disabled={!canAct}>
-          DEPOSIT
-        </Button>
-        <Button onClick={() => void withdraw()} disabled={!canAct}>
-          WITHDRAW
-        </Button>
+        <span className="as-actions-pair">
+          <Button onClick={() => void deposit()} disabled={!canAct}>
+            DEPOSIT
+          </Button>
+          <Button onClick={() => void withdraw()} disabled={!canAct}>
+            WITHDRAW
+          </Button>
+        </span>
       </div>
       {sent ? <p className="as-caption">Submitted {sent.slice(0, 10)}… — it will appear above once mined.</p> : null}
     </div>

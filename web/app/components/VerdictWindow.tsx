@@ -59,19 +59,32 @@ export function VerdictWindow({ agent, id = 'verdict', className }: { agent: Age
         </div>
       ) : null}
 
+      {agent.reasoningVerified === false ? (
+        <p className="as-state as-state-alarm">
+          <strong>REASONING DOES NOT MATCH ITS OWN HASH</strong> — the text shown here does not hash
+          to the value recorded with this verdict. Treat it as unverified.
+        </p>
+      ) : null}
+
       <p className="as-caption">
-        {agent.reasoningVerified === true ? (
+        {agent.boundToLine === true ? (
           <>
-            The reasoning above hashes to the value bound into this agent&rsquo;s offer on Creditcoin,
-            so it is the text the contract was given, not a later rewrite.
+            This is the judgment the credit line was opened on, and the reasoning above hashes to the
+            value bound into that offer on Creditcoin. It is the text the contract was given, not a
+            later rewrite.
           </>
-        ) : agent.reasoningVerified === false ? (
+        ) : agent.boundToLine === false ? (
           <>
-            <strong>REASONING DOES NOT MATCH THE CHAIN</strong> — the text shown here does not hash to
-            the value bound into the on-chain offer. Treat it as unverified.
+            This agent has been <strong>re-judged since its line was opened</strong>. Evidence moved,
+            so the underwriter formed a new view. The reasoning above is that newer judgment and
+            hashes to its own recorded value; the line itself is still bound to the earlier decision.
+            Both are real, and the pair is the point.
           </>
         ) : (
-          <>No credit line has been offered yet, so there is no on-chain hash to check this against.</>
+          <>
+            No credit line has been offered yet, so there is no on-chain offer to bind this judgment
+            to. The reasoning above still hashes to the value recorded with it.
+          </>
         )}
       </p>
     </Window>
