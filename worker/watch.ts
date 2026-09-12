@@ -142,6 +142,11 @@ function classify(log: ethers.Log): { action: ActionName; agentId: number } | nu
     return { action: 'feedback', agentId: Number(BigInt(log.topics[1])) };
   }
   if (isIdentity && topic === IDENTITY_EVENTS.transfer.topic0) {
+    // A mint is Transfer(0x0 → owner). The contract already ignores it for
+    // ownership, and the registration is proven separately, so queuing it only
+    // buys a refused duplicate proof on every newcomer.
+    const from = BigInt(log.topics[1]);
+    if (from === 0n) return null;
     return { action: 'transfer', agentId: Number(BigInt(log.topics[3])) };
   }
   if (isIdentity && topic === IDENTITY_EVENTS.metadataSet.topic0) {
