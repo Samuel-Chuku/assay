@@ -6,6 +6,7 @@ import { getProvenFacts, type ProvenFact } from '@/lib/evidence';
 import { EvidenceWindow } from './components/EvidenceWindow';
 import { LiveActivity } from './components/LiveActivity';
 import { Meter } from './components/Meter';
+import { OutcomeList } from './components/OutcomeList';
 import { Window } from './components/Window';
 
 export const revalidate = 60;
@@ -97,12 +98,7 @@ export default async function Page() {
           chains no lender can read.
         </p>
       </Window>
-      <Window title="Happening now" id="live" className="as-w-live">
-        <LiveActivity initial={recent} />
-        <p className="as-caption">
-          Read from the credit contract and refreshed every thirty seconds. A borrower is a process
-          that runs whether or not anyone is watching; the timestamps are the proof.
-        </p>
+      <Window title="Live" id="live" className="as-w-live">
         <Meter
           label="proven facts"
           kind="attestation"
@@ -123,6 +119,14 @@ export default async function Page() {
         />
         <p className="as-caption">
           Read from Creditcoin when this page was built, not written by hand.
+        </p>
+      </Window>
+
+      <Window title="Happening now" id="activity" className="as-w-wide">
+        <LiveActivity initial={recent} />
+        <p className="as-caption">
+          Read from the credit contract and refreshed every thirty seconds. A borrower is a process
+          that runs whether or not anyone is watching; the timestamps are the proof.
         </p>
       </Window>
 
@@ -165,25 +169,7 @@ export default async function Page() {
             built. Nothing is shown rather than something unverified.
           </p>
         ) : (
-          <ul className="as-outcome-list">
-            {agentRows.map((a) => (
-              <li key={a.agentId}>
-                <Link className="as-outcome" href={`/app/${a.agentId}`}>
-                  <span className="as-outcome-id">#{a.agentId}</span>
-                  <span
-                    className={
-                      a.approved ? 'as-outcome-verdict is-yes' : 'as-outcome-verdict is-no'
-                    }
-                  >
-                    {a.verdictLabel}
-                  </span>
-                  <span className="as-outcome-line">{a.lineLabel}</span>
-                  <span className="as-outcome-why">{a.why}</span>
-                  <span aria-hidden="true">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <OutcomeList rows={agentRows} />
         )}
       </Window>
 

@@ -1537,6 +1537,11 @@ a.as-button {
   padding: 0;
 }
 
+/* In the modal the body's own padding already sets the list off from the titlebar. */
+.as-modal-body .as-outcome-list {
+  margin-top: 0;
+}
+
 .as-outcome {
   display: grid;
   grid-template-columns: auto auto auto 1fr auto;
