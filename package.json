@@ -22,7 +22,8 @@
     "evidence:export": "tsx scripts/export-evidence.ts",
     "borrow": "tsx worker/borrow.ts",
     "rate": "tsx scripts/rate-agent.ts",
-    "apply": "tsx scripts/apply.ts"
+    "apply": "tsx scripts/apply.ts",
+    "agent:new": "tsx scripts/new-agent.ts"
   },
   "dependencies": {
     "@gluwa/asc-contracts": "0.2.1",

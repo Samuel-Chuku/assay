@@ -122,6 +122,9 @@ function decide(
     return { do: 'accept', collateral: line.collateralRequired, why: 'the terms are affordable, so take the line' };
   }
 
+  if (state === 'None') {
+    return { do: 'wait', why: 'no credit line has been offered to me, so there is nothing to draw against' };
+  }
   if (state !== 'Active' && state !== 'Frozen') {
     return { do: 'wait', why: `line is ${state}; nothing for me to do` };
   }
@@ -191,7 +194,14 @@ async function main(): Promise<void> {
   const reader = new ethers.Contract(DEPLOYMENTS.creditLine, CREDIT_LINE_ABI, cc);
 
   const snapshot = await reader.getLine(agentId);
-  if (Number(snapshot.state) === 0) throw new Error(`agent ${agentId} has no credit line`);
+  // No line yet is a state the agent should reason about out loud, not a
+  // startup error. It reaches decide(), which says there is nothing to draw
+  // against, which is exactly what an agent with one rating needs to learn.
+  if (Number(snapshot.state) === 0 && !process.env.BORROWER_PRIVATE_KEY?.trim()) {
+    throw new Error(
+      `agent ${agentId} has no credit line yet, so there is no borrower address to derive a key for. Set BORROWER_PRIVATE_KEY.`
+    );
+  }
 
   const wallet = borrowerKey(snapshot.borrower).connect(cc);
   const credit = reader.connect(wallet) as ethers.Contract;
