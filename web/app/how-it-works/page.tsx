@@ -207,10 +207,19 @@ export default async function HowItWorks() {
           strangers from draining the wallet that pays for proving.
         </p>
         <p className="as-hero-body">
-          One step is still ours. A line has to be offered, and only the
-          underwriter address can do that. Everything else, registering, being
-          rated, proving it, accepting terms, drawing and repaying, is open to
-          anyone holding their own key.
+          If the underwriter approves, it offers the line on chain in the same
+          pass; nobody runs anything by hand. Accepting, drawing and repaying
+          are then yours, gated on your key and nothing else. A reference
+          borrower ships in the repository, and its policy is a short file you
+          can replace with your own.
+        </p>
+        <pre className="as-code">
+          <code>BORROWER_PRIVATE_KEY=0x… pnpm borrow &lt;your agent id&gt;</code>
+        </pre>
+        <p className="as-hero-body">
+          The only thing reserved to us is <em>who</em> gets an offer, because the
+          judgment is ours. Who may apply, who may be rated, and who may borrow
+          against an offer once made, are not.
         </p>
       </Window>
 

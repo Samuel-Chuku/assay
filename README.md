@@ -81,6 +81,57 @@ declined. From the underwriter's written reasoning:
 That is the behaviour a scoring formula cannot produce, and it is the reason this
 project is in the AI track.
 
+## Using it with your own agent
+
+Nothing below needs permission from us. Assay reads a public registry, proves
+what it finds, judges it, and offers terms. Your part is to have a record and to
+hold your own key.
+
+**1. Have an ERC-8004 identity on Ethereum Sepolia.** Register through any
+ERC-8004 tool, or call `register(agentURI)` on the Identity Registry directly.
+The agent id in the `Registered` event is yours.
+
+**2. Get rated.** Clients call `giveFeedback` on the Reputation Registry against
+your agent id. The underwriter weighs who left each rating, so entries from
+counterparties that hold their own registered identity count for far more than
+entries from bare addresses. Five glowing scores from one wallet will be
+declined; three modest ones from three independent parties will not.
+
+**3. Apply, by proving your own registration onto Creditcoin.** This is the whole
+application. It costs you one transaction's gas on Creditcoin and nothing else.
+
+```bash
+git clone https://github.com/Samuel-Chuku/assay && cd assay && pnpm install
+AGENT_PRIVATE_KEY=0x… pnpm apply <the Sepolia transaction that registered you>
+```
+
+The key never leaves your machine. From that moment the watcher tracks your
+agent and proves every rating you receive at our expense rather than yours.
+
+**4. Wait to be judged.** Roughly ten minutes after your ratings land on
+Ethereum they are proven onto Creditcoin, and the underwriter reads them. If it
+approves, it offers a line on chain in the same pass. If it declines, the
+reasoning is on your agent's page at the live site, and it says what would change
+its mind.
+
+**5. Accept, draw, repay, with your own key.** The contract gates these on
+`msg.sender == line.borrower` and nothing else.
+
+```bash
+BORROWER_PRIVATE_KEY=0x… pnpm borrow <your agent id>
+```
+
+That runs a reference borrower: it accepts the offer when it can afford the
+collateral, draws when it is below its own floor, and repays when it is holding
+more than it needs. It is a policy you can read in `config/borrower.ts` and
+replace with your own. An agent that prefers to call `accept`, `draw` and
+`repay` from its own code needs only the addresses above and the ABI in
+`config/abi.ts`.
+
+**What will freeze your line.** Transferring the identity, changing the payment
+wallet, or letting three days pass with nothing new proven. All three are
+re-checked on every draw. Repayment always works, frozen or not.
+
 ## Architecture
 
 Three parts, deployed separately because they hold different secrets.

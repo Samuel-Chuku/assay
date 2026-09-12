@@ -29,7 +29,8 @@ import { ethers } from 'ethers';
 import { chainInfo } from '@gluwa/usc-sdk';
 
 import { ASSAY_ORACLE_ABI, CREDIT_LINE_ABI } from '../config/abi';
-import { REGISTRIES, SEPOLIA } from '../config/chains';
+import { GAS_LIMIT_MULTIPLIER, REGISTRIES, SEPOLIA } from '../config/chains';
+import { CREDIT_PARAMS } from '../config/demo';
 import { DEPLOYMENTS, ORACLE_DEPLOYED_AT_BLOCK } from '../config/deployments';
 import { IDENTITY_EVENTS, REPUTATION_EVENTS } from '../config/events';
 import { WATCHER } from '../config/watcher';
@@ -355,7 +356,7 @@ async function recordFreezes(agentIds: Set<number>, cc: ethers.JsonRpcProvider):
   }
 }
 
-async function reUnderwrite(agentIds: Set<number>): Promise<void> {
+async function reUnderwrite(agentIds: Set<number>, cc: ethers.JsonRpcProvider): Promise<void> {
   for (const agentId of agentIds) {
     try {
       const { entry, replayed } = await underwrite(agentId);
@@ -363,9 +364,59 @@ async function reUnderwrite(agentIds: Set<number>): Promise<void> {
         `underwrote ${agentId}: ${entry.approve ? 'APPROVED' : 'REFUSED'}` +
           `${replayed ? ' (unchanged)' : ` by ${entry.source}`}`
       );
+      if (entry.approve) await offerIfNone(agentId, entry, cc);
     } catch (error) {
       log(`underwriting ${agentId} failed: ${(error as Error).message.slice(0, 90)}`);
     }
+  }
+}
+
+/**
+ * An approval becomes an offer, on its own.
+ *
+ * Until this existed the watcher would judge an agent, log APPROVED, and stop.
+ * Turning that into a line required an operator to run a script by hand, which
+ * meant that in practice only agents we chose to run it for ever got credit.
+ * Everything else on the borrower's path is permissionless; this was the one
+ * step that quietly was not, and it is the step the underwriter key exists for.
+ *
+ * Offering moves no funds. The agent still has to post collateral to accept,
+ * and every draw is bounded by the pool's liquidity and re-checks the freeze
+ * triggers. The judgment is the gate on who gets an offer; this only makes the
+ * judgment's outcome real.
+ */
+async function offerIfNone(
+  agentId: number,
+  verdict: { credit_limit: string; collateral_ratio: number; rate_bps: number; reasoningHash: string },
+  cc: ethers.JsonRpcProvider
+): Promise<void> {
+  const key = process.env.DEPLOYER_PRIVATE_KEY!;
+  const underwriter = new ethers.Wallet(key.startsWith('0x') ? key : `0x${key}`, cc);
+  const credit = new ethers.Contract(DEPLOYMENTS.creditLine, CREDIT_LINE_ABI, underwriter);
+
+  const line = await credit.getLine(agentId);
+  if (Number(line.state) !== 0) return; // already offered, active, frozen, or repaid
+
+  const limit = ethers.parseEther(verdict.credit_limit);
+  const collateral = (limit * BigInt(Math.round(verdict.collateral_ratio * 10_000))) / 10_000n;
+  const expiry = (await cc.getBlockNumber()) + CREDIT_PARAMS.durationBlocks;
+  const args = [agentId, limit, collateral, verdict.rate_bps, expiry, verdict.reasoningHash] as const;
+
+  try {
+    const gas = await credit.offer.estimateGas(...args);
+    const buffer = BigInt(Math.round(GAS_LIMIT_MULTIPLIER * 100));
+    const tx = await credit.offer(...args, { gasLimit: (gas * buffer) / 100n });
+    const receipt = await tx.wait();
+    if (receipt?.status === 1) {
+      log(
+        `  offered ${agentId} a line: ${ethers.formatEther(limit)} tCTC at ${verdict.rate_bps} bps, ` +
+          `${ethers.formatEther(collateral)} collateral  ${receipt.hash}`
+      );
+    } else {
+      log(`  offer to ${agentId} reverted`);
+    }
+  } catch (error) {
+    log(`  could not offer ${agentId}: ${(error as Error).message.slice(0, 100)}`);
   }
 }
 
@@ -380,7 +431,7 @@ async function pass(sep: ethers.JsonRpcProvider, cc: ethers.JsonRpcProvider): Pr
   const touched = await proveReady(state, cc);
   if (touched.size > 0) {
     await recordFreezes(touched, cc);
-    await reUnderwrite(touched);
+    await reUnderwrite(touched, cc);
   }
 
   if (state.pending.length > 0) {
