@@ -16,9 +16,12 @@
  *   - reads its line and its own balance
  *   - accepts an offer when it can afford the collateral
  *   - draws when it cannot pay for its next job and the line has headroom
- *   - works: pays a supplier for inference, and gets paid by a client
+ *   - works: pays a supplier for inference now, and invoices a client who
+ *     pays later, which is the gap a credit line exists to cover
+ *   - pays a larger bill every so many jobs, because real costs are lumpy
  *   - repays when it is holding more than it needs, because idle borrowed
  *     capital costs interest
+ *   - pays out surplus once its debt is clear, so it will need the line again
  *
  * It never assumes a draw will succeed. Assay re-checks every freeze trigger
  * inside `draw`, so the honest thing is to attempt it and read the refusal.
@@ -77,8 +80,24 @@ function borrowerKey(expectedAddress: string): ethers.Wallet {
   throw new Error(`No key for borrower ${expectedAddress}. Set BORROWER_PRIVATE_KEY.`);
 }
 
+/**
+ * The counterparty.
+ *
+ * Somebody has to be the supplier the agent pays and the client that pays it.
+ * In this demo one wallet plays both, and it is ours, because the alternative
+ * is a random address that swallows tCTC forever and a client that never pays.
+ * Value circulates rather than evaporating, and the agent's balance moves for
+ * exactly the reasons a real one would.
+ */
+function marketKey(): ethers.Wallet {
+  const raw = process.env.MARKET_PRIVATE_KEY?.trim() ?? process.env.DEPLOYER_PRIVATE_KEY?.trim();
+  if (!raw) throw new Error('Set MARKET_PRIVATE_KEY (or DEPLOYER_PRIVATE_KEY) for the counterparty wallet.');
+  return new ethers.Wallet(raw.startsWith('0x') ? raw : `0x${raw}`);
+}
+
 type Decision =
   | { do: 'accept'; collateral: bigint; why: string }
+  | { do: 'distribute'; amount: bigint; why: string }
   | { do: 'draw'; amount: bigint; why: string }
   | { do: 'repay'; amount: bigint; why: string }
   | { do: 'work'; why: string }
@@ -115,6 +134,13 @@ function decide(
     const spare = balance - high;
     const amount = spare > owed ? owed : spare;
     return { do: 'repay', amount, why: `holding ${ctc(balance)}, more than I need; paying down ${ctc(amount)} of ${ctc(owed)}` };
+  }
+
+  // Debt clear and cash idle: a business pays that out. Without this the
+  // balance grows without bound, the agent never needs its line again, and the
+  // demonstration goes still.
+  if (owed === 0n && balance > high) {
+    return { do: 'distribute', amount: balance - high, why: `debt is clear and ${ctc(balance)} is more than I need to operate; paying out the surplus` };
   }
 
   if (balance < low && headroom > 0n) {
@@ -174,10 +200,32 @@ async function main(): Promise<void> {
   log(`agent ${agentId} borrowing as ${wallet.address}`);
   log(`policy: draw below ${BORROWER.lowWaterMark}, repay above ${BORROWER.highWaterMark} tCTC${dry ? '  [dry run]' : ''}`);
 
+  const market = marketKey().connect(cc);
+  log(`counterparty ${market.address} (supplier and client)`);
+
   let draws = 0;
   let earned = 0n;
+  let jobs = 0;
+  let tick = 0;
+  /** Invoices raised, keyed by the tick they fall due. */
+  const invoices: { due: number; amount: bigint }[] = [];
 
   for (;;) {
+    tick++;
+
+    // Revenue arrives on its own schedule, not when the work was done.
+    if (!dry) {
+      for (const inv of invoices.filter((i) => i.due <= tick)) {
+        await send(`client paid ${ctc(inv.amount)}`, () =>
+          market.sendTransaction({ to: wallet.address, value: inv.amount })
+        );
+        earned += inv.amount;
+      }
+      const remaining = invoices.filter((i) => i.due > tick);
+      invoices.length = 0;
+      invoices.push(...remaining);
+    }
+
     const line = await reader.getLine(agentId);
     const state = STATES[Number(line.state)];
     const balance = await cc.getBalance(wallet.address);
@@ -205,18 +253,31 @@ async function main(): Promise<void> {
         await send('repaid ' + ctc(decision.amount), () =>
           credit.repay(agentId, { value: decision.amount, gasLimit: (gas * buffer) / 100n })
         );
+      } else if (decision.do === 'distribute') {
+        await send(`paid out ${ctc(decision.amount)} of surplus`, () =>
+          wallet.sendTransaction({ to: market.address, value: decision.amount })
+        );
       } else if (decision.do === 'work') {
         // Work costs money before it earns any: the exact problem Assay exists
-        // for. Paying a supplier and being paid by a client are both real
-        // transfers, so the balance moves for real reasons.
+        // for. The supplier is paid now. The client's invoice is raised now and
+        // paid later, so the balance dips before it recovers.
         const cost = ethers.parseEther(String(BORROWER.jobCost));
         const revenue = ethers.parseEther(String(BORROWER.jobRevenue));
-        const supplier = ethers.Wallet.createRandom().address;
-        await send(`paid ${ctc(cost)} for inference`, () =>
-          wallet.sendTransaction({ to: supplier, value: cost })
+        const ok = await send(`paid ${ctc(cost)} for inference`, () =>
+          wallet.sendTransaction({ to: market.address, value: cost })
         );
-        earned += revenue;
-        log(`  job done; ${ctc(revenue)} invoiced, ${ctc(earned)} earned this run`);
+        if (ok) {
+          jobs++;
+          invoices.push({ due: tick + BORROWER.invoiceDelayTicks, amount: revenue });
+          log(`  job ${jobs} done; ${ctc(revenue)} invoiced, due in ${BORROWER.invoiceDelayTicks} ticks; ${ctc(earned)} collected so far`);
+
+          if (jobs % BORROWER.billEveryJobs === 0) {
+            const bill = ethers.parseEther(String(BORROWER.billAmount));
+            await send(`paid the ${ctc(bill)} infrastructure bill`, () =>
+              wallet.sendTransaction({ to: market.address, value: bill })
+            );
+          }
+        }
       }
     }
 

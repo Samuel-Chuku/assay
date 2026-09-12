@@ -1327,9 +1327,23 @@ a.as-button {
   border-color: var(--as-ink);
 }
 
+/*
+ * The chosen profile is filled, not just outlined. An outline alone was easy
+ * to miss among four near-identical cards. Mint rather than blue: blue means
+ * proven and this is a selection, not a fact.
+ */
 .as-sim-profile.is-active {
   border-color: var(--as-ink);
   box-shadow: var(--as-shadow-2);
+  background: color-mix(in srgb, var(--as-settled) 42%, var(--as-surface));
+}
+
+.as-sim-profile.is-active .as-sim-profile-blurb {
+  color: var(--as-ink);
+}
+
+.as-sim-profile.is-active .as-sim-profile-name::after {
+  content: ' ✓';
 }
 
 .as-sim-profile-name {
@@ -2339,4 +2353,144 @@ a.as-button {
    address on each of two lines is worse than a label on its own line. */
 .as-addr {
   white-space: nowrap;
+}
+
+/* ---- Evidence filter chips ---- */
+
+.as-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--as-2);
+  margin: var(--as-3) 0 var(--as-4);
+}
+
+.as-filter-chip {
+  font: inherit;
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--as-ink-dim);
+  background: var(--as-surface);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-radius: var(--as-r-control);
+  padding: var(--as-1) var(--as-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--as-2);
+  transition:
+    color var(--as-dur) var(--as-ease),
+    border-color var(--as-dur) var(--as-ease),
+    background var(--as-dur) var(--as-ease),
+    box-shadow var(--as-dur) var(--as-ease);
+}
+
+.as-filter-chip:hover {
+  color: var(--as-ink);
+  border-color: var(--as-ink);
+}
+
+.as-filter-chip.is-on {
+  color: var(--as-ink);
+  border-color: var(--as-ink);
+  background: var(--as-paper);
+  box-shadow: var(--as-shadow-1);
+}
+
+/* Each kind carries its colour on the left edge when active, matching the
+   tones used everywhere else: caution for the world moving, frozen for a
+   transfer, plain for the rest. */
+.as-filter-chip.is-transfer.is-on { border-left: 5px solid var(--as-frozen); }
+.as-filter-chip.is-wallet.is-on { border-left: 5px solid var(--as-caution); }
+.as-filter-chip.is-feedback.is-on { border-left: 5px solid var(--as-settled); }
+.as-filter-chip.is-identity.is-on { border-left: 5px solid var(--as-ink); }
+
+.as-filter-count {
+  font-family: var(--as-data);
+  font-weight: 400;
+  color: var(--as-ink-faint);
+  letter-spacing: 0;
+}
+
+.as-filter-chip.is-on .as-filter-count {
+  color: var(--as-ink-dim);
+}
+
+/* ---- Live feed on the home page ---- */
+
+.as-live-feed {
+  list-style: none;
+  margin: 0 0 var(--as-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-2);
+}
+
+.as-live-row {
+  display: flex;
+  gap: var(--as-3);
+  align-items: flex-start;
+  padding: var(--as-2) var(--as-3);
+  border: var(--as-bw) solid var(--as-ink-faint);
+  border-left-width: 5px;
+  border-radius: var(--as-r-control);
+  background: var(--as-surface);
+}
+
+.as-live-row.is-drawn { border-left-color: var(--as-caution); }
+.as-live-row.is-repaid,
+.as-live-row.is-closed { border-left-color: var(--as-settled); }
+.as-live-row.is-frozen { border-left-color: var(--as-frozen); }
+
+.as-live-chip { width: 34px; height: 34px; }
+.as-live-chip.is-drawn { background: var(--as-caution); color: #1A1A1A; }
+.as-live-chip.is-repaid,
+.as-live-chip.is-closed { background: var(--as-settled); color: #1A1A1A; }
+.as-live-chip.is-frozen { background: var(--as-frozen); color: #1A1A1A; }
+
+.as-live-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--as-1);
+  min-width: 0;
+}
+
+.as-live-label {
+  font-family: var(--as-chrome);
+  font-weight: 700;
+  font-size: var(--as-size-body);
+}
+
+.as-live-label a {
+  color: var(--as-ink);
+}
+
+.as-live-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--as-3);
+  font-size: var(--as-size-label);
+  color: var(--as-ink-dim);
+}
+
+.as-live-when {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A row that arrived while you were looking. Same step-eased slide as the
+   simulator log, and a brief wash so the eye goes to it. */
+.as-live-row.is-fresh {
+  animation: as-step-in 240ms steps(4) 1, as-live-wash 4s linear 1;
+}
+
+@keyframes as-live-wash {
+  from { background: color-mix(in srgb, var(--as-caution) 40%, var(--as-surface)); }
+  to { background: var(--as-surface); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-live-row.is-fresh { animation: none; }
 }

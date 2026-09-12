@@ -22,8 +22,23 @@ export const BORROWER = {
   /** What a client pays for that work. The margin is why borrowing is rational. */
   jobRevenue: 0.2,
 
+  /**
+   * How many ticks after a job its invoice is paid. This is the thesis in one
+   * number: an agent pays for inference now and gets paid for the work later,
+   * and that gap is what a credit line covers.
+   */
+  invoiceDelayTicks: 6,
+
+  /**
+   * A larger bill every so many jobs: model access, hosting, whatever a real
+   * agent pays monthly. Costs are lumpy, and a lump is what pushes a healthy
+   * agent back below its floor and onto its line again.
+   */
+  billEveryJobs: 12,
+  billAmount: 0.8,
+
   /** Seconds between decisions. */
-  tickSeconds: 20,
+  tickSeconds: 45,
 
   /**
    * A ceiling on draws per run, so a bug in the loop above cannot empty the

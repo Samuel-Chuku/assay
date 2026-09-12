@@ -1,8 +1,10 @@
 import Link from 'next/link';
 
 import { getAgents, getPool, type Agent } from '@/lib/agents';
+import { getRecentActivity } from '@/lib/activity';
 import { getProvenFacts, type ProvenFact } from '@/lib/evidence';
 import { EvidenceWindow } from './components/EvidenceWindow';
+import { LiveActivity } from './components/LiveActivity';
 import { Meter } from './components/Meter';
 import { Window } from './components/Window';
 
@@ -28,9 +30,10 @@ const STEPS = [
 ];
 
 export default async function Page() {
-  const [pool, agents_, factsResult] = await Promise.all([
+  const [pool, agents_, recent, factsResult] = await Promise.all([
     getPool().catch(() => null),
     getAgents().catch(() => []),
+    getRecentActivity(8).catch(() => []),
     getProvenFacts().then(
       (facts) => ({ facts, error: undefined as string | undefined }),
       (cause: unknown) => ({
@@ -94,7 +97,12 @@ export default async function Page() {
           chains no lender can read.
         </p>
       </Window>
-      <Window title="Live" id="live" className="as-w-live">
+      <Window title="Happening now" id="live" className="as-w-live">
+        <LiveActivity initial={recent} />
+        <p className="as-caption">
+          Read from the credit contract and refreshed every thirty seconds. A borrower is a process
+          that runs whether or not anyone is watching; the timestamps are the proof.
+        </p>
         <Meter
           label="proven facts"
           kind="attestation"

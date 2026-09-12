@@ -68,6 +68,36 @@ async function creditLogs(cc: ethers.JsonRpcProvider): Promise<ethers.Log[]> {
 /** Block timestamps never change, so they are kept for the life of the process. */
 const blockTimes = new Map<number, Promise<number | null>>();
 
+/**
+ * Recent activity across every agent, newest first.
+ *
+ * The per-agent feed answers "what did this one do". This answers "is anything
+ * happening", which is the question a first-time visitor is actually asking,
+ * and the honest answer is only convincing if the timestamps are minutes old.
+ */
+export async function getRecentActivity(limit = 10): Promise<(Activity & { agentId: number })[]> {
+  const cc = creditcoin();
+  const iface = new ethers.Interface(CREDIT_LINE_ABI as unknown as string[]);
+  const logs = await creditLogs(cc);
+
+  const all: (Activity & { agentId: number })[] = [];
+  for (const log of logs) {
+    let parsed: ethers.LogDescription | null = null;
+    try {
+      parsed = iface.parseLog({ topics: [...log.topics], data: log.data });
+    } catch {
+      parsed = null;
+    }
+    if (!parsed || parsed.args.agentId === undefined) continue;
+    const a = describe(parsed, log);
+    if (a) all.push({ ...a, agentId: Number(parsed.args.agentId) });
+  }
+
+  const recent = all.slice(-limit).reverse();
+  await stamp(cc, recent);
+  return recent;
+}
+
 export async function getActivity(agentId: number, limit = 12): Promise<Activity[]> {
   const cc = creditcoin();
   const iface = new ethers.Interface(CREDIT_LINE_ABI as unknown as string[]);
@@ -84,64 +114,77 @@ export async function getActivity(agentId: number, limit = 12): Promise<Activity
     }
     if (!parsed || parsed.args.agentId === undefined) continue;
     if (Number(parsed.args.agentId) !== agentId) continue;
+    const a = describe(parsed, log);
+    if (a) mine.push(a);
+  }
 
-    const base = { txHash: log.transactionHash, block: log.blockNumber, timestamp: null };
+  const recent = mine.slice(-limit).reverse();
+  await stamp(cc, recent);
+  return recent;
+}
 
-    if (parsed.name === 'LineOffered') {
-      mine.push({
+/** One credit-line event, in words. */
+function describe(parsed: ethers.LogDescription, log: ethers.Log): Activity | null {
+  const base = { txHash: log.transactionHash, block: log.blockNumber, timestamp: null };
+
+  switch (parsed.name) {
+    case 'LineOffered':
+      return {
         ...base,
         kind: 'offered',
         actor: 'underwriter',
         label: 'Line offered',
         detail: `${ctc(parsed.args.limit)} limit at ${parsed.args.interestBps} bps, against ${ctc(parsed.args.collateralRequired)} of collateral`,
-      });
-    } else if (parsed.name === 'LineAccepted') {
-      mine.push({
+      };
+    case 'LineAccepted':
+      return {
         ...base,
         kind: 'accepted',
         actor: 'agent',
         label: 'Agent accepted the terms',
         detail: `posted ${ctc(parsed.args.collateralPosted)} of collateral`,
-      });
-    } else if (parsed.name === 'Drawn') {
-      mine.push({
+      };
+    case 'Drawn':
+      return {
         ...base,
         kind: 'drawn',
         actor: 'agent',
         label: `Agent drew ${ctc(parsed.args.amount)}`,
         detail: `${ctc(parsed.args.principalOutstanding)} outstanding after this`,
-      });
-    } else if (parsed.name === 'RepaidLine') {
-      mine.push({
+      };
+    case 'RepaidLine':
+      return {
         ...base,
         kind: 'repaid',
         actor: 'agent',
         label: `Agent repaid ${ctc(parsed.args.principal)}`,
         detail: `plus ${ctc(parsed.args.interest)} of interest; ${ctc(parsed.args.principalOutstanding)} still outstanding`,
-      });
-    } else if (parsed.name === 'LineFrozen') {
-      mine.push({
+      };
+    case 'LineFrozen':
+      return {
         ...base,
         kind: 'frozen',
         actor: 'anyone',
         label: 'Line frozen',
         detail: `${FREEZE_REASONS[Number(parsed.args.reason)]} — anyone may call this, it needs no permission`,
-      });
-    } else if (parsed.name === 'LineClosed') {
-      mine.push({
+      };
+    case 'LineClosed':
+      return {
         ...base,
         kind: 'closed',
         actor: 'agent',
         label: 'Line closed',
         detail: `${ctc(parsed.args.collateralReturned)} of collateral returned`,
-      });
-    }
+      };
+    default:
+      return null;
   }
+}
 
-  const recent = mine.slice(-limit).reverse();
-
+/** Fills in block timestamps, from a cache that never expires. */
+async function stamp(cc: ethers.JsonRpcProvider, items: Activity[]): Promise<void> {
   await Promise.all(
-    recent.map(async (a) => {
+    items.map(async (a) => {
       if (!blockTimes.has(a.block)) {
         blockTimes.set(
           a.block,
@@ -154,6 +197,4 @@ export async function getActivity(agentId: number, limit = 12): Promise<Activity
       a.timestamp = await blockTimes.get(a.block)!;
     })
   );
-
-  return recent;
 }
