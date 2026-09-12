@@ -241,6 +241,12 @@ line. What its proven history buys is the uncollateralised portion above that,
 and a stronger record earns a lower ratio. Describing this as uncollateralised
 lending would overstate it.
 
+**One line per agent, for life.** A line can only be offered to an agent whose
+line state is `None`, and after full repayment it is `Repaid`. An agent that
+borrows and repays cannot borrow again on the same identity. Allowing a
+repaid line to be reopened is a contract change, and redeploying the contract
+would orphan every proof and line on the current one.
+
 **Recourse ends at the collateral.** On default the contract seizes collateral up
 to the principal and writes the remainder off against the pool. There is no
 further claim on the agent.
