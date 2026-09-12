@@ -218,12 +218,20 @@ async function scan(sep: ethers.JsonRpcProvider, state: State, tracked: Set<numb
    * a wallet change because it always implies one — the registry clears the
    * wallet on transfer — while the reverse is not true.
    */
-  const priority: Record<ActionName, number> = {
-    transfer: 4,
-    registration: 3,
-    feedback: 2,
-    wallet: 1,
-  };
+  const queued = queueEvents(logs, state, tracked);
+
+  state.lastScannedBlock = to;
+  if (queued > 0) log(`scanned ${from}-${to}: queued ${queued} new event(s)`);
+  saveState(state);
+}
+
+/**
+ * Queues the events in a batch of Sepolia logs that concern tracked agents,
+ * one action per transaction, highest priority wins. Shared by the forward scan
+ * and the backfill so the two cannot disagree about what counts.
+ */
+function queueEvents(logs: ethers.Log[], state: State, tracked: Set<number>): number {
+  const priority: Record<ActionName, number> = { transfer: 4, registration: 3, feedback: 2, wallet: 1 };
 
   const best = new Map<string, Pending>();
   for (const entry of logs) {
@@ -245,10 +253,32 @@ async function scan(sep: ethers.JsonRpcProvider, state: State, tracked: Set<numb
   }
 
   state.pending.push(...best.values());
-  const queued = best.size;
+  return best.size;
+}
 
-  state.lastScannedBlock = to;
-  if (queued > 0) log(`scanned ${from}-${to}: queued ${queued} new event(s)`);
+/**
+ * An agent that has just become tracked may already have a history.
+ *
+ * The forward scan only keeps events for agents it already knows, so ratings a
+ * newcomer received before applying had already been scanned past and thrown
+ * away by the time it appeared. A real agent bringing an existing record would
+ * have lost all of it. This looks back a day for each newly tracked agent and
+ * queues what it finds, once.
+ */
+async function backfill(sep: ethers.JsonRpcProvider, state: State, newAgents: Set<number>): Promise<void> {
+  if (newAgents.size === 0) return;
+  const head = await resilient('head read', () => sep.getBlockNumber());
+  const from = Math.max(0, head - WATCHER.coldStartBlocks);
+
+  let queued = 0;
+  for (let start = from; start <= head; start += WATCHER.scanWindowBlocks) {
+    const end = Math.min(start + WATCHER.scanWindowBlocks - 1, head);
+    const logs = await resilient(`backfill ${start}-${end}`, () =>
+      sep.getLogs({ address: [REGISTRIES.identity, REGISTRIES.reputation], fromBlock: start, toBlock: end })
+    );
+    queued += queueEvents(logs, state, newAgents);
+  }
+  log(`backfilled ${[...newAgents].join(', ')}: queued ${queued} earlier event(s)`);
   saveState(state);
 }
 
@@ -422,10 +452,16 @@ async function offerIfNone(
 
 async function pass(sep: ethers.JsonRpcProvider, cc: ethers.JsonRpcProvider): Promise<void> {
   const state = loadState();
+  const before = new Set(state.tracked);
   const tracked = await trackedAgents(cc, state);
   // Persist the tracking cursor even if the Sepolia scan below fails, so a bad
   // pass does not make the next one rescan the whole oracle history.
   saveState(state);
+
+  const newcomers = new Set([...tracked].filter((id) => !before.has(id)));
+  // A first run has no "before" and would backfill everyone; that is what the
+  // cold-start scan already does, so only backfill once tracking is established.
+  if (before.size > 0) await backfill(sep, state, newcomers);
 
   await scan(sep, state, tracked);
   const touched = await proveReady(state, cc);
