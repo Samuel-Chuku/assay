@@ -461,7 +461,18 @@ async function pass(sep: ethers.JsonRpcProvider, cc: ethers.JsonRpcProvider): Pr
   const newcomers = new Set([...tracked].filter((id) => !before.has(id)));
   // A first run has no "before" and would backfill everyone; that is what the
   // cold-start scan already does, so only backfill once tracking is established.
-  if (before.size > 0) await backfill(sep, state, newcomers);
+  if (before.size > 0 && newcomers.size > 0) {
+    try {
+      await backfill(sep, state, newcomers);
+    } catch (error) {
+      // The tracked set was saved above, so without this the agent would count
+      // as known on the next pass and its history would never be looked for
+      // again. Un-track it so the next pass treats it as new and tries again.
+      state.tracked = state.tracked.filter((id) => !newcomers.has(id));
+      saveState(state);
+      throw error;
+    }
+  }
 
   await scan(sep, state, tracked);
   const touched = await proveReady(state, cc);
